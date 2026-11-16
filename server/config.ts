@@ -1,5 +1,13 @@
 import path from 'node:path';
 import fs from 'node:fs';
+import { hashPassword } from './lib/auth';
+
+/**
+ * Senha administrativa padrão FIXA ("controladoria"), usada quando ADMIN_PASSWORD_HASH
+ * não está definido. Uso temporário/evento único: definir ADMIN_PASSWORD_HASH sobrescreve.
+ */
+const DEFAULT_ADMIN_PASSWORD = 'controladoria';
+const DEFAULT_ADMIN_PASSWORD_HASH = hashPassword(DEFAULT_ADMIN_PASSWORD);
 
 /** Carrega o .env (se existir) sem dependências externas. */
 export function loadEnv(file: string = path.resolve(process.cwd(), '.env')) {
@@ -44,7 +52,7 @@ export function readConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     dev: env.NODE_ENV !== 'production',
     dataDir: path.resolve(process.cwd(), env.DATA_DIR || './data'),
     publicBaseUrl: normalizeBaseUrl(env.PUBLIC_BASE_URL),
-    adminPasswordHash: (env.ADMIN_PASSWORD_HASH || '').trim(),
+    adminPasswordHash: (env.ADMIN_PASSWORD_HASH || '').trim() || DEFAULT_ADMIN_PASSWORD_HASH,
     sessionSecret: (env.SESSION_SECRET || '').trim(),
     trustProxy: env.TRUST_PROXY === '1' || env.TRUST_PROXY === 'true',
     allowedOrigins: (env.ALLOWED_ORIGINS || '')

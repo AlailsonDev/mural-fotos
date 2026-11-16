@@ -307,7 +307,7 @@ export default function SettingsSection(_: { live: LiveState }) {
         <section className="card p-5 sm:p-6">
           <h3 className="font-semibold">Segurança</h3>
           <p className="mt-0.5 text-sm text-slate-500">
-            A senha é definida no computador do servidor com <code className="rounded bg-slate-100 px-1">npm run set-password</code> (armazenada apenas como hash).
+            A senha administrativa é fixa (definida na própria aplicação). Para trocá-la, defina a variável <code className="rounded bg-slate-100 px-1">ADMIN_PASSWORD_HASH</code> no servidor.
           </p>
           <button type="button" className="btn-ghost mt-4" onClick={logoutAll}>
             <LogOut className="h-4 w-4" /> Encerrar todas as sessões
