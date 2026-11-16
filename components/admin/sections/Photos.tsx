@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Ban, RotateCcw, Trash2, ChevronsUp, ImageOff, Maximize2 } from 'lucide-react';
+import { Ban, RotateCcw, Trash2, ChevronsUp, ImageOff, Maximize2, Download } from 'lucide-react';
 import { api, ApiError, formatBytes, formatDateTime } from '@/lib/client/api';
 import type { PhotoRecord, EventStats, PhotoStatus } from '@/lib/shared/types';
 import type { EventWithStats, LiveState } from '../AdminApp';
@@ -120,6 +120,17 @@ export default function PhotosSection({ live }: { live: LiveState }) {
         subtitle="Todas as fotos ficam guardadas no computador até serem excluídas pelo administrador ou pela limpeza automática."
         actions={
           events.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+            {eventId && (
+              <a
+                className={`btn-ghost ${!stats || stats.received - stats.rejected <= 0 ? 'pointer-events-none opacity-50' : ''}`}
+                href={`/api/admin/events/${eventId}/photos.zip`}
+                download
+                title="Baixa todas as fotos do evento (exceto rejeitadas) em um arquivo .zip"
+              >
+                <Download className="h-4 w-4" /> Baixar todas (.zip)
+              </a>
+            )}
             <select className="input w-auto min-w-56" value={eventId} onChange={(e) => { setEventId(e.target.value); setPhotos(null); }}>
               {events.map((e) => (
                 <option key={e.id} value={e.id}>
@@ -127,6 +138,7 @@ export default function PhotosSection({ live }: { live: LiveState }) {
                 </option>
               ))}
             </select>
+            </div>
           )
         }
       />

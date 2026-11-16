@@ -4,6 +4,7 @@ import path from 'node:path';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import QRCode from 'qrcode';
 import busboy from 'busboy';
+import archiver from 'archiver';
 import { pipeline } from 'node:stream/promises';
 import type { Services } from '../services';
 import type { PhotoRecord, PublicStatus, DisplayStatus } from '../../lib/shared/types';
@@ -305,6 +306,43 @@ export function createApp(svc: Services, hooks: AppHooks) {
     if (status === 'queued') list = list.sort((a, b) => a.position - b.position);
     else list = list.sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
     res.json({ photos: list.map(adminPhoto), stats: svc.store.stats(id) });
+  });
+
+  // Baixa todas as fotos do evento (exceto rejeitadas) em um único .zip, na ordem de envio.
+  admin.get('/events/:id/photos.zip', (req, res, next) => {
+    const id = String(req.params.id);
+    const ev = svc.store.getEvent(id);
+    if (!ev) return next(new AppError(404, 'Evento não encontrado.'));
+    const photos = svc.store
+      .listPhotos(id)
+      .filter((p) => p.status !== 'rejected')
+      .sort((a, b) => a.receivedAt.localeCompare(b.receivedAt));
+    const files = photos
+      .map((p) => ({ p, file: svc.store.photoFilePath(p) }))
+      .filter((x): x is { p: PhotoRecord; file: string } => !!x.file && fs.existsSync(x.file));
+    if (!files.length) return next(new AppError(404, 'Nenhuma fotografia para baixar.', 'no_photos'));
+
+    const safe = (s: string) => s.normalize('NFKD').replace(/[^\w.-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'evento';
+    const day = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="fotos-${safe(ev.name)}-${day}.zip"`);
+    res.setHeader('Cache-Control', 'no-store');
+
+    // Fotos já são comprimidas (JPG/WebP): armazenar sem recompressão é mais rápido e leve.
+    const zip = archiver('zip', { store: true });
+    zip.on('warning', (err) => log.warn('Aviso ao gerar zip', String(err)));
+    zip.on('error', (err) => {
+      log.error('Falha ao gerar zip', String(err));
+      res.destroy(err);
+    });
+    res.on('close', () => zip.destroy());
+    zip.pipe(res);
+    const pad = String(files.length).length;
+    files.forEach(({ p, file }, i) => {
+      const base = safe(path.parse(p.originalName || '').name) || 'foto';
+      zip.file(file, { name: `${String(i + 1).padStart(pad, '0')}_${base}${path.extname(file) || '.jpg'}` });
+    });
+    zip.finalize().catch(() => undefined);
   });
 
   const photoAction = (fn: (eventId: string, photoId: string) => Promise<unknown>) =>

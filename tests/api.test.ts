@@ -202,6 +202,34 @@ describe('Administração de fotografias e eventos', () => {
   });
 });
 
+describe('Download de todas as fotos (.zip)', () => {
+  it('exige administrador e entrega um zip com todas as fotos do evento', async () => {
+    const ev = await activeEvent(ts.svc, 'Evento do zip');
+    await request(ts.server).get(`/api/admin/events/${ev.id}/photos.zip`).expect(401);
+    const { agent } = await adminAgent(ts.server);
+    await agent.get(`/api/admin/events/${ev.id}/photos.zip`).expect(404); // ainda sem fotos
+    const jpeg = await makeJpeg(200, 200);
+    await upload([{ buf: jpeg, name: 'um.jpg' }, { buf: jpeg, name: 'dois.jpg' }, { buf: jpeg, name: 'tres.jpg' }]).expect(200);
+    const res = await agent
+      .get(`/api/admin/events/${ev.id}/photos.zip`)
+      .buffer(true)
+      .parse((r, cb) => {
+        const chunks: Buffer[] = [];
+        r.on('data', (c: Buffer) => chunks.push(c));
+        r.on('end', () => cb(null, Buffer.concat(chunks)));
+      })
+      .expect(200)
+      .expect('Content-Type', /zip/);
+    expect(res.headers['content-disposition']).toMatch(/attachment; filename="fotos-.*\.zip"/);
+    const buf = res.body as Buffer;
+    expect(buf.subarray(0, 2).toString()).toBe('PK');
+    // 3 entradas no diretório central do zip
+    let entries = 0;
+    for (let i = 0; i < buf.length - 4; i++) if (buf.readUInt32LE(i) === 0x02014b50) entries++;
+    expect(entries).toBe(3);
+  });
+});
+
 describe('Tempo real (Socket.IO) e tela de transmissão', () => {
   it('a tela autorizada recebe as fotos em tempo real e reconecta sem duplicar', async () => {
     setFastPlayback(ts.svc, 0.3);
