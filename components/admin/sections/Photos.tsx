@@ -124,11 +124,11 @@ export default function PhotosSection({ live }: { live: LiveState }) {
             {eventId && (
               <a
                 className={`btn-ghost ${!stats || stats.received - stats.rejected <= 0 ? 'pointer-events-none opacity-50' : ''}`}
-                href={`/api/admin/events/${eventId}/photos.zip`}
+                href={`/api/admin/events/${eventId}/photos.pdf`}
                 download
-                title="Baixa todas as fotos do evento (exceto rejeitadas) em um arquivo .zip"
+                title="Baixa todas as fotos do evento (exceto rejeitadas) em um único PDF (uma foto e legenda por página)"
               >
-                <Download className="h-4 w-4" /> Baixar todas (.zip)
+                <Download className="h-4 w-4" /> Baixar todas (PDF)
               </a>
             )}
             <select className="input w-auto min-w-56" value={eventId} onChange={(e) => { setEventId(e.target.value); setPhotos(null); }}>
@@ -180,6 +180,7 @@ export default function PhotosSection({ live }: { live: LiveState }) {
                     <span className="absolute bottom-2 right-2 rounded-lg bg-black/50 p-1 text-white opacity-0 transition group-hover:opacity-100"><Maximize2 className="h-3.5 w-3.5" /></span>
                   </button>
                   <div className="p-2.5">
+                    {p.caption && <p className="mb-1.5 line-clamp-2 text-center text-xs italic text-slate-700" title={p.caption}>“{p.caption}”</p>}
                     <div className="mb-2 text-center text-[11px] text-slate-500">{formatDateTime(p.receivedAt)}</div>
                     {actions(p)}
                   </div>
@@ -197,6 +198,7 @@ export default function PhotosSection({ live }: { live: LiveState }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={preview.url} alt="" className="max-h-[60dvh] w-auto object-contain" />
             </div>
+            {preview.caption && <p className="mb-4 rounded-xl bg-slate-50 px-4 py-3 text-center text-base italic text-slate-800">“{preview.caption}”</p>}
             <dl className="mb-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
               <div><dt className="text-xs text-slate-500">Status</dt><dd><PhotoBadge status={preview.status} /></dd></div>
               <div><dt className="text-xs text-slate-500">Recebida em</dt><dd>{formatDateTime(preview.receivedAt)}</dd></div>

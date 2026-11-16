@@ -13,10 +13,10 @@ afterAll(async () => {
   await ts.close();
 });
 
-const upload = (files: { buf: Buffer; name: string; type?: string; clientId?: string }[], headers: Record<string, string> = {}) => {
+const upload = (files: { buf: Buffer; name: string; type?: string; clientId?: string; caption?: string }[], headers: Record<string, string> = {}) => {
   let req = request(ts.server).post('/api/public/upload');
   for (const [k, v] of Object.entries(headers)) req = req.set(k, v);
-  req = req.field('meta', JSON.stringify(files.map((f, i) => ({ clientId: f.clientId || `cliente-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 8)}`, name: f.name }))));
+  req = req.field('meta', JSON.stringify(files.map((f, i) => ({ clientId: f.clientId || `cliente-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 8)}`, name: f.name, caption: f.caption }))));
   for (const f of files) req = req.attach('photos', f.buf, { filename: f.name, contentType: f.type || 'image/jpeg' });
   return req;
 };
@@ -202,16 +202,33 @@ describe('Administração de fotografias e eventos', () => {
   });
 });
 
-describe('Download de todas as fotos (.zip)', () => {
-  it('exige administrador e entrega um zip com todas as fotos do evento', async () => {
-    const ev = await activeEvent(ts.svc, 'Evento do zip');
-    await request(ts.server).get(`/api/admin/events/${ev.id}/photos.zip`).expect(401);
-    const { agent } = await adminAgent(ts.server);
-    await agent.get(`/api/admin/events/${ev.id}/photos.zip`).expect(404); // ainda sem fotos
+describe('Legendas e download em PDF', () => {
+  it('guarda a legenda enviada (saneada) e a repassa à transmissão', async () => {
+    const ev = await activeEvent(ts.svc, 'Evento da legenda');
     const jpeg = await makeJpeg(200, 200);
-    await upload([{ buf: jpeg, name: 'um.jpg' }, { buf: jpeg, name: 'dois.jpg' }, { buf: jpeg, name: 'tres.jpg' }]).expect(200);
+    const sujo = '  Feliz <b>2026</b>!\n\nUm   brinde  ';
+    await upload([{ buf: jpeg, name: 'a.jpg', caption: sujo }]).expect(200);
+    const photo = ts.svc.store.listPhotos(ev.id).find((p) => p.caption)!;
+    expect(photo.caption).toBe('Feliz b 2026 /b ! Um brinde');
+    const longa = await upload([{ buf: jpeg, name: 'b.jpg', caption: 'x'.repeat(500) }]).expect(200);
+    expect(longa.body.accepted).toHaveLength(1);
+    const maior = ts.svc.store.listPhotos(ev.id).map((p) => (p.caption || '').length);
+    expect(Math.max(...maior)).toBe(140);
+  });
+
+  it('exige administrador e entrega um PDF com uma página por foto', async () => {
+    const ev = await activeEvent(ts.svc, 'Evento do pdf');
+    await request(ts.server).get(`/api/admin/events/${ev.id}/photos.pdf`).expect(401);
+    const { agent } = await adminAgent(ts.server);
+    await agent.get(`/api/admin/events/${ev.id}/photos.pdf`).expect(404); // ainda sem fotos
+    const jpeg = await makeJpeg(200, 200);
+    await upload([
+      { buf: jpeg, name: 'um.jpg', caption: 'Primeira' },
+      { buf: jpeg, name: 'dois.jpg', caption: 'Ação e emoção 🎉' },
+      { buf: jpeg, name: 'tres.jpg' },
+    ]).expect(200);
     const res = await agent
-      .get(`/api/admin/events/${ev.id}/photos.zip`)
+      .get(`/api/admin/events/${ev.id}/photos.pdf`)
       .buffer(true)
       .parse((r, cb) => {
         const chunks: Buffer[] = [];
@@ -219,14 +236,12 @@ describe('Download de todas as fotos (.zip)', () => {
         r.on('end', () => cb(null, Buffer.concat(chunks)));
       })
       .expect(200)
-      .expect('Content-Type', /zip/);
-    expect(res.headers['content-disposition']).toMatch(/attachment; filename="fotos-.*\.zip"/);
+      .expect('Content-Type', /pdf/);
+    expect(res.headers['content-disposition']).toMatch(/attachment; filename="fotos-.*\.pdf"/);
     const buf = res.body as Buffer;
-    expect(buf.subarray(0, 2).toString()).toBe('PK');
-    // 3 entradas no diretório central do zip
-    let entries = 0;
-    for (let i = 0; i < buf.length - 4; i++) if (buf.readUInt32LE(i) === 0x02014b50) entries++;
-    expect(entries).toBe(3);
+    expect(buf.subarray(0, 5).toString()).toBe('%PDF-');
+    const pages = (buf.toString('latin1').match(/\/Type \/Page\b/g) || []).length;
+    expect(pages).toBe(3);
   });
 });
 

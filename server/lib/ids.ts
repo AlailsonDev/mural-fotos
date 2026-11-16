@@ -9,6 +9,18 @@ export const isUuid = (v: unknown): v is string => typeof v === 'string' && UUID
 export const isClientId = (v: unknown): v is string => typeof v === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(v);
 
 /** Limpa o nome original apenas para exibição (nunca é usado como nome de arquivo no disco). */
+export const MAX_CAPTION_LENGTH = 140;
+
+/** Legenda de foto: texto simples, sem caracteres de controle, em uma linha, até 140 caracteres. */
+export function sanitizeCaption(value: unknown): string {
+  return String(value ?? '')
+    .normalize('NFC')
+    .replace(/[\u0000-\u001f\u007f<>]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, MAX_CAPTION_LENGTH);
+}
+
 export function sanitizeDisplayName(name: string): string {
   const base = String(name || 'foto')
     .replace(/[\\/]/g, '_')

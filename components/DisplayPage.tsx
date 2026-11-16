@@ -10,6 +10,7 @@ type Auth = 'checking' | 'ok' | 'need-key';
 interface Slot {
   photoId: string | null;
   url: string | null;
+  caption?: string;
 }
 
 export default function DisplayPage() {
@@ -110,6 +111,7 @@ export default function DisplayPage() {
   const current = status?.playback.current ?? null;
   const currentId = current?.photo.id ?? null;
   const currentUrl = current?.photo.url ?? null;
+  const currentCaption = current?.photo.caption ?? '';
 
   useEffect(() => {
     if (!currentId || !currentUrl) {
@@ -130,9 +132,10 @@ export default function DisplayPage() {
     pendingRef.current = currentId;
     setSlots((prev) => {
       const next: [Slot, Slot] = [{ ...prev[0] }, { ...prev[1] }];
-      next[back] = { photoId: currentId, url: currentUrl };
+      next[back] = { photoId: currentId, url: currentUrl, caption: currentCaption };
       return next;
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentId, currentUrl]);
 
   const onSlotLoaded = (idx: number) => {
@@ -326,6 +329,16 @@ export default function DisplayPage() {
                   onError={() => onSlotLoaded(idx)}
                   className="absolute inset-0 h-full w-full object-contain drop-shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
                 />
+                {slot.caption && (
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center px-[3vmin] pb-[4vmin] pt-[14vmin] bg-gradient-to-t from-black/75 via-black/40 to-transparent">
+                    <p
+                      className="caption-script max-w-[92%] text-center text-white"
+                      style={{ fontSize: slot.caption.length > 90 ? '4.6vmin' : slot.caption.length > 45 ? '5.6vmin' : '7vmin' }}
+                    >
+                      {slot.caption}
+                    </p>
+                  </div>
+                )}
               </>
             )}
           </div>

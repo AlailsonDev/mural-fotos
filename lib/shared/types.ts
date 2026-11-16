@@ -55,6 +55,8 @@ export interface PhotoRecord {
   skipped: boolean;
   timesDisplayed: number;
   clientId: string | null;
+  /** Legenda opcional escrita por quem enviou a foto (vazia se não houver). */
+  caption?: string;
 }
 
 export interface Branding {
@@ -93,6 +95,7 @@ export interface PublicPhoto {
   width: number;
   height: number;
   url: string;
+  caption: string;
 }
 
 export interface PlaybackSnapshot {

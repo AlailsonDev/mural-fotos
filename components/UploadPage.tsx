@@ -10,8 +10,11 @@ interface Selected {
   id: string;
   file: File;
   url: string;
+  caption: string;
   error?: string;
 }
+
+const MAX_CAPTION = 140;
 
 type Phase = 'select' | 'uploading' | 'done';
 
@@ -85,7 +88,7 @@ export default function UploadPage() {
       let err: string | undefined;
       if (file.size > maxMB * 1024 * 1024) err = `Maior que ${maxMB} MB`;
       else if (!(await sniffImage(file))) err = 'Formato não aceito';
-      added.push({ id: randomId(), file, url: URL.createObjectURL(file), error: err });
+      added.push({ id: randomId(), file, url: URL.createObjectURL(file), caption: '', error: err });
     }
     setFiles((prev) => [...prev, ...added]);
     if (inputRef.current) inputRef.current.value = '';
@@ -99,12 +102,14 @@ export default function UploadPage() {
     });
   };
 
+  const setCaption = (id: string, caption: string) => setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, caption } : f)));
+
   const valid = files.filter((f) => !f.error);
 
   const sendOnce = (items: Selected[]) =>
     new Promise<{ status: number; body: any }>((resolve, reject) => {
       const fd = new FormData();
-      fd.append('meta', JSON.stringify(items.map((f) => ({ clientId: f.id, name: f.file.name }))));
+      fd.append('meta', JSON.stringify(items.map((f) => ({ clientId: f.id, name: f.file.name, caption: f.caption.trim() }))));
       for (const f of items) fd.append('photos', f.file, f.file.name);
       const xhr = new XMLHttpRequest();
       xhr.open('POST', '/api/public/upload');
@@ -251,21 +256,41 @@ export default function UploadPage() {
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="flex flex-col gap-3">
                   {files.map((f) => (
-                    <div key={f.id} className="relative aspect-square overflow-hidden rounded-2xl bg-white/10 animate-pop">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={f.url} alt="" className={`h-full w-full object-cover ${f.error ? 'opacity-30' : ''}`} />
-                      {f.error && (
-                        <div className="absolute inset-x-1 bottom-1 rounded-lg bg-rose-600/90 px-1.5 py-1 text-center text-[10px] font-semibold leading-tight">
-                          {f.error}
-                        </div>
-                      )}
+                    <div key={f.id} className="flex items-stretch gap-3 rounded-2xl bg-white/5 p-2.5 animate-pop">
+                      <div className="relative aspect-square w-24 shrink-0 overflow-hidden rounded-xl bg-white/10">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={f.url} alt="" className={`h-full w-full object-cover ${f.error ? 'opacity-30' : ''}`} />
+                        {f.error && (
+                          <div className="absolute inset-x-1 bottom-1 rounded-lg bg-rose-600/90 px-1 py-0.5 text-center text-[10px] font-semibold leading-tight">
+                            {f.error}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex min-w-0 flex-1 flex-col justify-center">
+                        <label className="mb-1 text-xs font-medium text-white/60" htmlFor={`cap-${f.id}`}>
+                          Legenda (opcional)
+                        </label>
+                        <textarea
+                          id={`cap-${f.id}`}
+                          value={f.caption}
+                          onChange={(e) => setCaption(f.id, e.target.value)}
+                          disabled={phase === 'uploading' || !!f.error}
+                          maxLength={MAX_CAPTION}
+                          rows={2}
+                          placeholder="Escreva uma frase para esta foto…"
+                          className="w-full resize-none rounded-xl border border-white/15 bg-black/30 px-3 py-2 text-sm text-white outline-none placeholder:text-white/35 focus:border-white/40 disabled:opacity-50"
+                        />
+                        <span className="mt-0.5 text-right text-[10px] text-white/35">
+                          {f.caption.length}/{MAX_CAPTION}
+                        </span>
+                      </div>
                       {phase !== 'uploading' && (
                         <button
                           onClick={() => remove(f.id)}
                           aria-label="Remover foto"
-                          className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-black/60 backdrop-blur transition hover:bg-black/80"
+                          className="grid h-8 w-8 shrink-0 place-items-center self-start rounded-full bg-black/40 transition hover:bg-black/70"
                         >
                           <X className="h-4 w-4" />
                         </button>

@@ -7,7 +7,7 @@ import type { Request, Response } from 'express';
 import type { Services } from '../services';
 import { RateLimiter } from '../lib/rateLimit';
 import { clientIp } from './security';
-import { isClientId, newId, sanitizeDisplayName } from '../lib/ids';
+import { isClientId, newId, sanitizeCaption, sanitizeDisplayName } from '../lib/ids';
 import { ACCEPTED_EXT, ACCEPTED_MIME, InvalidImageError, imageSemaphore, processImage } from '../lib/image';
 import { AppError } from '../lib/errors';
 import { log } from '../lib/logger';
@@ -27,6 +27,7 @@ interface IncomingFile {
   index: number;
   clientId: string | null;
   name: string;
+  caption: string;
   tmp: string;
   size: number;
   truncated: boolean;
@@ -66,7 +67,7 @@ export function createUploadHandler(svc: Services, notify: (socketId: string, ev
     activeUploads++;
     const files: IncomingFile[] = [];
     const results: { accepted: UploadResultItem[]; rejected: UploadResultItem[] } = { accepted: [], rejected: [] };
-    let meta: Array<{ clientId?: string; name?: string }> = [];
+    let meta: Array<{ clientId?: string; name?: string; caption?: string }> = [];
     let tooMany = 0;
 
     try {
@@ -77,7 +78,7 @@ export function createUploadHandler(svc: Services, notify: (socketId: string, ev
             files: settings.maxFilesPerUpload,
             fileSize: maxBytes,
             fields: 5,
-            fieldSize: 8 * 1024,
+            fieldSize: 32 * 1024,
             parts: settings.maxFilesPerUpload + 5,
           },
         });
@@ -104,6 +105,7 @@ export function createUploadHandler(svc: Services, notify: (socketId: string, ev
             index: i,
             clientId: isClientId(m.clientId) ? m.clientId : null,
             name,
+            caption: sanitizeCaption(m.caption),
             tmp: path.join(svc.tmpDir, `${newId()}.upload`),
             size: 0,
             truncated: false,
@@ -172,6 +174,7 @@ export function createUploadHandler(svc: Services, notify: (socketId: string, ev
               width: processed.width,
               height: processed.height,
               format: processed.format,
+              caption: f.caption,
             });
             if (duplicate) await removeProcessed(eventDir, processed);
             results.accepted.push({ ...base, photoId: photo.id, position: photo.position, duplicate });

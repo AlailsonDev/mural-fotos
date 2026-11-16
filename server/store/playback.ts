@@ -19,7 +19,7 @@ interface CurrentPlay {
 }
 
 export function toPublicPhoto(p: PhotoRecord): PublicPhoto {
-  return { id: p.id, eventId: p.eventId, width: p.width, height: p.height, url: `/media/${p.eventId}/${p.id}` };
+  return { id: p.id, eventId: p.eventId, width: p.width, height: p.height, url: `/media/${p.eventId}/${p.id}`, caption: p.caption || '' };
 }
 
 /**

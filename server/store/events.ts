@@ -39,6 +39,7 @@ export interface NewPhotoInput {
   width: number;
   height: number;
   format: string;
+  caption?: string;
 }
 
 /**
@@ -391,6 +392,7 @@ export class EventStore extends EventEmitter {
         skipped: false,
         timesDisplayed: 0,
         clientId: input.clientId,
+        caption: input.caption || '',
       };
       list.push(photo);
       // A ordem importa: a posição é reservada no event.json antes de registrar a foto.
