@@ -160,7 +160,8 @@ export class PlaybackEngine extends EventEmitter {
     const canPick = !!ev && hasScreen && (running || (opts.allowWhilePaused && this.mode === 'paused'));
 
     if (!this.current && canPick && ev) {
-      const next = this.store.nextQueued(ev.id);
+      let next = this.store.nextQueued(ev.id);
+      if (!next) next = await this.recycleForLoop(ev.id);
       if (next) {
         const s = this.settings.get();
         const photo = await this.store.markPlaying(ev.id, next.id);
@@ -198,6 +199,26 @@ export class PlaybackEngine extends EventEmitter {
 
     this.emit('broadcast', 'queue:updated', this.queueInfo());
     this.emit('status', this.snapshot());
+  }
+
+  /**
+   * Carrossel contínuo: quando a fila esgota, todas as fotos já exibidas (exceto puladas/rejeitadas)
+   * voltam para a fila na ORDEM ORIGINAL DE UPLOAD. Fotos novas que chegarem durante o ciclo
+   * entram no fim da fila e passam a fazer parte dos ciclos seguintes, também por ordem de envio.
+   */
+  private async recycleForLoop(eventId: string) {
+    const shown = this.store
+      .listPhotos(eventId, 'displayed')
+      .filter((p) => !p.skipped)
+      .sort((a, b) => a.receivedAt.localeCompare(b.receivedAt));
+    for (const p of shown) {
+      try {
+        await this.store.requeuePhoto(eventId, p.id);
+      } catch (err) {
+        log.warn('Falha ao reciclar foto no carrossel', String(err));
+      }
+    }
+    return this.store.nextQueued(eventId);
   }
 
   private onTimer(photoId: string) {

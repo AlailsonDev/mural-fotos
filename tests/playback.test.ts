@@ -58,12 +58,25 @@ describe('Máquina de estados da transmissão', () => {
     const photos = [];
     for (let i = 0; i < 5; i++) photos.push(await addFake(svc, ev.id));
     svc.engine.addDisplay('tela-1');
-    await waitFor(() => t.displayed.length === 5, 8000);
-    expect(t.played).toEqual(photos.map((p) => p.id));
-    expect(t.displayed).toEqual(photos.map((p) => p.id));
+    await waitFor(() => t.displayed.length >= 5, 8000);
+    const ids = photos.map((p) => p.id);
+    expect(t.played.slice(0, 5)).toEqual(ids);
+    expect(t.displayed.slice(0, 5)).toEqual(ids);
     expect(t.maxPlaying()).toBeLessThanOrEqual(1);
-    expect(svc.store.stats(ev.id).displayed).toBe(5);
-    expect(svc.engine.snapshot().effective).toBe('idle'); // fila vazia -> tela de espera
+  });
+
+  it('carrossel contínuo: ao esgotar a fila, repete as fotos na ordem de upload, sem parar', async () => {
+    const svc = await services();
+    setFastPlayback(svc, 0.1);
+    const ev = await activeEvent(svc);
+    const t = track(svc);
+    const ids: string[] = [];
+    for (let i = 0; i < 3; i++) ids.push((await addFake(svc, ev.id)).id);
+    svc.engine.addDisplay('tela-1');
+    await waitFor(() => t.played.length >= 9, 8000);
+    expect(t.played.slice(0, 9)).toEqual([...ids, ...ids, ...ids]);
+    expect(t.maxPlaying()).toBeLessThanOrEqual(1);
+    expect(svc.engine.snapshot().effective).toBe('playing');
   });
 
   it('foto nova não interrompe a atual e entra no final da fila', async () => {
@@ -126,8 +139,9 @@ describe('Máquina de estados da transmissão', () => {
     await svc.engine.resume();
     await waitFor(() => svc.engine.snapshot().current?.photo.id === c.id, 3000);
     await svc.engine.next();
-    expect(svc.store.getPhoto(ev.id, c.id)!.status).toBe('displayed');
-    expect(svc.engine.snapshot().current).toBeNull();
+    // c foi exibida; o carrossel recomeça por b (a foi pulada e não volta ao ciclo)
+    expect(svc.engine.snapshot().current!.photo.id).toBe(b.id);
+    expect(svc.store.getPhoto(ev.id, a.id)!.status).toBe('displayed');
   });
 
   it('parar devolve a foto atual para a fila', async () => {
@@ -173,6 +187,6 @@ describe('Máquina de estados da transmissão', () => {
     svc2.engine.addDisplay('tela');
     const t = track(svc2);
     await waitFor(() => svc2.store.stats(ev.id).displayed === 2, 4000);
-    expect(t.played).toEqual([a.id, b.id]);
+    expect(t.played.slice(0, 2)).toEqual([a.id, b.id]);
   });
 });

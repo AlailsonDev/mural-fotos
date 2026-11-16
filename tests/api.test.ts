@@ -231,8 +231,9 @@ describe('Tempo real (Socket.IO) e tela de transmissão', () => {
     sock.disconnect();
     await new Promise((r) => setTimeout(r, 200));
     sock.connect();
-    await waitFor(() => ts.svc.store.stats(ev.id).displayed === 2, 6000);
-    expect(new Set(playing).size).toBe(playing.length); // nenhuma foto exibida duas vezes
+    await waitFor(() => playing.length >= 4, 8000);
+    // carrossel: as fotos se repetem em ciclos, mas a reconexão nunca duplica a mesma foto em sequência
+    for (let i = 1; i < playing.length; i++) expect(playing[i]).not.toBe(playing[i - 1]);
     expect(ts.svc.store.stats(ev.id).received).toBe(2);
 
     // a mídia exige autorização

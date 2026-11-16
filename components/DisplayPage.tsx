@@ -276,7 +276,28 @@ export default function DisplayPage() {
       className={`relative h-dvh w-screen select-none overflow-hidden bg-[#050507] text-white ${!mouseActive ? 'no-cursor' : ''}`}
       onDoubleClick={toggleFullscreen}
     >
+      {/* Painel lateral: QR Code sempre visível ao lado da foto em destaque */}
+      <aside className="absolute inset-y-0 right-0 z-[5] flex w-[28%] flex-col items-center justify-center gap-[3vmin] border-l border-white/10 bg-[#07070c] px-[2.5vmin] text-center">
+        <div className="blob left-[-20%] top-[5%] h-[35vmin] w-[35vmin] brand-gradient" />
+        {logo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logo} alt="" className="relative h-[9vmin] w-auto max-w-full object-contain" />
+        )}
+        {status?.event && <h2 className="brand-text relative text-[3.4vmin] font-extrabold leading-tight">{status.event.name}</h2>}
+        {status?.qrUrl && (
+          <div className="relative flex flex-col items-center">
+            <div className="rounded-[2.4vmin] bg-white p-[1.8vmin] shadow-2xl shadow-black/60">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/api/qr.svg?size=800&v=${encodeURIComponent(status.qrUrl)}`} alt="QR Code" className="aspect-square w-[min(24vw,60vmin)]" />
+            </div>
+            <p className="mt-[2vmin] text-[2.4vmin] font-semibold leading-snug text-white/90">Escaneie e envie sua foto!</p>
+            <p className="mt-[1vmin] max-w-full break-all text-[1.6vmin] text-white/40">{status.qrUrl.replace(/\/$/, '')}</p>
+          </div>
+        )}
+      </aside>
+
       {/* Camadas de fotos (duas, alternadas, para transição cruzada suave) */}
+      <div className="absolute inset-y-0 left-0 w-[72%] overflow-hidden">
       {slots.map((slot, idx) => {
         const visible = showingPhoto && idx === front && !!slot.url;
         return (
@@ -310,6 +331,7 @@ export default function DisplayPage() {
           </div>
         );
       })}
+      </div>
 
       {/* Tela de espera */}
       <div
