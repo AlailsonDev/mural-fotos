@@ -84,7 +84,7 @@ body {
 
 /* Legenda das fotos na transmissão */
 .caption-script {
-  font-family: var(--font-caption), 'Caveat', 'Segoe Script', 'Brush Script MT', cursive;
+  font-family: var(--font-caption), 'Mountains of Christmas', 'Segoe Script', 'Brush Script MT', cursive;
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: 0.01em;
