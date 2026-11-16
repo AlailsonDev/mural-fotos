@@ -51,7 +51,7 @@ export function readConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     host: env.HOST || '0.0.0.0',
     dev: env.NODE_ENV !== 'production',
     dataDir: path.resolve(process.cwd(), env.DATA_DIR || './data'),
-    publicBaseUrl: normalizeBaseUrl(env.PUBLIC_BASE_URL),
+    publicBaseUrl: normalizeBaseUrl(env.PUBLIC_BASE_URL) || normalizeBaseUrl(env.RENDER_EXTERNAL_URL),
     adminPasswordHash: (env.ADMIN_PASSWORD_HASH || '').trim() || DEFAULT_ADMIN_PASSWORD_HASH,
     sessionSecret: (env.SESSION_SECRET || '').trim(),
     trustProxy: env.TRUST_PROXY === '1' || env.TRUST_PROXY === 'true',
