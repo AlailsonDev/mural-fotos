@@ -79,6 +79,21 @@ describe('Máquina de estados da transmissão', () => {
     expect(svc.engine.snapshot().effective).toBe('playing');
   });
 
+  it('carrossel com 1 e com 2 fotos nunca para', async () => {
+    for (const n of [1, 2]) {
+      const svc = await services();
+      setFastPlayback(svc, 0.1);
+      const ev = await activeEvent(svc, `Loop ${n}`);
+      const t = track(svc);
+      const ids: string[] = [];
+      for (let i = 0; i < n; i++) ids.push((await addFake(svc, ev.id)).id);
+      svc.engine.addDisplay('tela');
+      await waitFor(() => t.played.length >= 7, 8000);
+      t.played.slice(0, 7).forEach((id, i) => expect(id).toBe(ids[i % n]));
+      expect(svc.engine.snapshot().effective).toBe('playing');
+    }
+  });
+
   it('foto nova não interrompe a atual e entra no final da fila', async () => {
     const svc = await services();
     setFastPlayback(svc, 0.5);

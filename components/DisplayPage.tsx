@@ -129,12 +129,34 @@ export default function DisplayPage() {
       return;
     }
     const back = frontRef.current === 0 ? 1 : 0;
+    // Carrossel: a foto pode já estar carregada no outro slot (ex.: 2 fotos em loop). Nesse caso o
+    // navegador não dispara "onLoad" de novo; então apenas trazemos esse slot para a frente.
+    if (s[back].photoId === currentId && s[back].url === currentUrl) {
+      pendingRef.current = null;
+      setSlots((prev) => {
+        const next: [Slot, Slot] = [{ ...prev[0] }, { ...prev[1] }];
+        next[back] = { photoId: currentId, url: currentUrl, caption: currentCaption };
+        return next;
+      });
+      setFront(back);
+      setShowingPhoto(true);
+      return;
+    }
     pendingRef.current = currentId;
     setSlots((prev) => {
       const next: [Slot, Slot] = [{ ...prev[0] }, { ...prev[1] }];
       next[back] = { photoId: currentId, url: currentUrl, caption: currentCaption };
       return next;
     });
+    // Proteção: se a imagem não sinalizar o carregamento, não deixa a tela travada na foto anterior.
+    const guard = setTimeout(() => {
+      if (pendingRef.current === currentId) {
+        pendingRef.current = null;
+        setFront(back);
+        setShowingPhoto(true);
+      }
+    }, 6000);
+    return () => clearTimeout(guard);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentId, currentUrl]);
 
