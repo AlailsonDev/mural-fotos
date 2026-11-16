@@ -202,7 +202,7 @@ describe('Administração de fotografias e eventos', () => {
   });
 });
 
-describe('Legendas e download em PDF', () => {
+describe('Legendas', () => {
   it('guarda a legenda enviada (saneada) e a repassa à transmissão', async () => {
     const ev = await activeEvent(ts.svc, 'Evento da legenda');
     const jpeg = await makeJpeg(200, 200);
@@ -214,34 +214,6 @@ describe('Legendas e download em PDF', () => {
     expect(longa.body.accepted).toHaveLength(1);
     const maior = ts.svc.store.listPhotos(ev.id).map((p) => (p.caption || '').length);
     expect(Math.max(...maior)).toBe(140);
-  });
-
-  it('exige administrador e entrega um PDF com uma página por foto', async () => {
-    const ev = await activeEvent(ts.svc, 'Evento do pdf');
-    await request(ts.server).get(`/api/admin/events/${ev.id}/photos.pdf`).expect(401);
-    const { agent } = await adminAgent(ts.server);
-    await agent.get(`/api/admin/events/${ev.id}/photos.pdf`).expect(404); // ainda sem fotos
-    const jpeg = await makeJpeg(200, 200);
-    await upload([
-      { buf: jpeg, name: 'um.jpg', caption: 'Primeira' },
-      { buf: jpeg, name: 'dois.jpg', caption: 'Ação e emoção 🎉' },
-      { buf: jpeg, name: 'tres.jpg' },
-    ]).expect(200);
-    const res = await agent
-      .get(`/api/admin/events/${ev.id}/photos.pdf`)
-      .buffer(true)
-      .parse((r, cb) => {
-        const chunks: Buffer[] = [];
-        r.on('data', (c: Buffer) => chunks.push(c));
-        r.on('end', () => cb(null, Buffer.concat(chunks)));
-      })
-      .expect(200)
-      .expect('Content-Type', /pdf/);
-    expect(res.headers['content-disposition']).toMatch(/attachment; filename="fotos-.*\.pdf"/);
-    const buf = res.body as Buffer;
-    expect(buf.subarray(0, 5).toString()).toBe('%PDF-');
-    const pages = (buf.toString('latin1').match(/\/Type \/Page\b/g) || []).length;
-    expect(pages).toBe(3);
   });
 });
 

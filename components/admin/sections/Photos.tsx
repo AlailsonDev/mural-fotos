@@ -28,6 +28,7 @@ export default function PhotosSection({ live }: { live: LiveState }) {
   const [stats, setStats] = useState<EventStats | null>(null);
   const [preview, setPreview] = useState<AdminPhoto | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [pdfProgress, setPdfProgress] = useState<{ done: number; total: number } | null>(null);
 
   useEffect(() => {
     api<EventWithStats[]>('/api/admin/events')
@@ -88,6 +89,39 @@ export default function PhotosSection({ live }: { live: LiveState }) {
   };
 
   const ev = events.find((e) => e.id === eventId);
+
+  // PDF montado no navegador: cada página tem o formato da foto, com a legenda sobre ela (como no telão).
+  const downloadPdf = async () => {
+    if (!eventId || pdfProgress) return;
+    setPdfProgress({ done: 0, total: 0 });
+    try {
+      const r = await api<{ photos: AdminPhoto[] }>(`/api/admin/events/${eventId}/photos`);
+      const list = r.photos.filter((p) => p.status !== 'rejected').sort((a, b) => a.receivedAt.localeCompare(b.receivedAt));
+      if (!list.length) {
+        toast('error', 'Nenhuma fotografia para baixar.');
+        return;
+      }
+      const { buildPhotosPdf } = await import('@/lib/client/photoPdf');
+      const blob = await buildPhotosPdf(
+        list.map((p) => ({ id: p.id, url: p.url, caption: p.caption })),
+        `Fotos - ${ev?.name || 'evento'}`,
+        (done, total) => setPdfProgress({ done, total }),
+      );
+      const name = (ev?.name || 'evento').normalize('NFKD').replace(/[^\w.-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'evento';
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `fotos-${name}-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+      toast('ok', `PDF gerado com ${list.length} foto(s).`);
+    } catch (err) {
+      toast('error', `Não foi possível gerar o PDF: ${(err as Error).message}`);
+    } finally {
+      setPdfProgress(null);
+    }
+  };
   const B = (key: string, I: React.ComponentType<{ className?: string }>) => (busy === key ? <Spinner className="h-3.5 w-3.5" /> : <I className="h-3.5 w-3.5" />);
 
   const actions = (p: AdminPhoto, full = false) => (
@@ -122,14 +156,16 @@ export default function PhotosSection({ live }: { live: LiveState }) {
           events.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
             {eventId && (
-              <a
-                className={`btn-ghost ${!stats || stats.received - stats.rejected <= 0 ? 'pointer-events-none opacity-50' : ''}`}
-                href={`/api/admin/events/${eventId}/photos.pdf`}
-                download
-                title="Baixa todas as fotos do evento (exceto rejeitadas) em um único PDF (uma foto e legenda por página)"
+              <button
+                type="button"
+                className="btn-ghost"
+                disabled={!stats || stats.received - stats.rejected <= 0 || !!pdfProgress}
+                onClick={downloadPdf}
+                title="Baixa todas as fotos do evento (exceto rejeitadas) em um único PDF, com as legendas sobre as fotos"
               >
-                <Download className="h-4 w-4" /> Baixar todas (PDF)
-              </a>
+                {pdfProgress ? <Spinner className="h-4 w-4" /> : <Download className="h-4 w-4" />}
+                {pdfProgress ? `Gerando PDF… ${pdfProgress.done}/${pdfProgress.total}` : 'Baixar todas (PDF)'}
+              </button>
             )}
             <select className="input w-auto min-w-56" value={eventId} onChange={(e) => { setEventId(e.target.value); setPhotos(null); }}>
               {events.map((e) => (

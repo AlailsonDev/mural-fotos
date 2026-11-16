@@ -4,8 +4,6 @@ import path from 'node:path';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import QRCode from 'qrcode';
 import busboy from 'busboy';
-import PDFDocument from 'pdfkit';
-import sharp from 'sharp';
 import { pipeline } from 'node:stream/promises';
 import type { Services } from '../services';
 import type { PhotoRecord, PublicStatus, DisplayStatus } from '../../lib/shared/types';
@@ -307,77 +305,6 @@ export function createApp(svc: Services, hooks: AppHooks) {
     if (status === 'queued') list = list.sort((a, b) => a.position - b.position);
     else list = list.sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
     res.json({ photos: list.map(adminPhoto), stats: svc.store.stats(id) });
-  });
-
-  // Baixa todas as fotos do evento (exceto rejeitadas) em um único PDF: uma foto + legenda por página.
-  admin.get('/events/:id/photos.pdf', (req, res, next) => {
-    const id = String(req.params.id);
-    const ev = svc.store.getEvent(id);
-    if (!ev) return next(new AppError(404, 'Evento não encontrado.'));
-    const files = svc.store
-      .listPhotos(id)
-      .filter((p) => p.status !== 'rejected')
-      .sort((a, b) => a.receivedAt.localeCompare(b.receivedAt))
-      .map((p) => ({ p, file: svc.store.photoFilePath(p) }))
-      .filter((x) => fs.existsSync(x.file));
-    if (!files.length) return next(new AppError(404, 'Nenhuma fotografia para baixar.', 'no_photos'));
-
-    const safe = (s: string) => s.normalize('NFKD').replace(/[^\w.-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'evento';
-    const day = new Date().toISOString().slice(0, 10);
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="fotos-${safe(ev.name)}-${day}.pdf"`);
-    res.setHeader('Cache-Control', 'no-store');
-
-    const doc = new PDFDocument({ size: 'A4', margin: 40, autoFirstPage: false, info: { Title: `Fotos - ${ev.name}`, Producer: 'Mural de Fotos' } });
-    let closed = false;
-    res.on('close', () => {
-      closed = true;
-    });
-    doc.on('error', (err: Error) => {
-      log.error('Falha ao gerar PDF', String(err));
-      res.destroy(err);
-    });
-    doc.pipe(res);
-
-    // Fontes padrão do PDF só cobrem Latin-1 + pontuação comum: remove emojis/símbolos não suportados.
-    const pdfText = (t: string) => t.replace(/[^ -ÿ‘’“”–—…€•]/g, '').replace(/\s+/g, ' ').trim();
-
-    (async () => {
-      for (let i = 0; i < files.length; i++) {
-        if (closed) return;
-        const { p, file } = files[i];
-        let img: Buffer | null = null;
-        try {
-          img = await sharp(file).rotate().resize(1800, 1800, { fit: 'inside', withoutEnlargement: true }).flatten({ background: '#ffffff' }).jpeg({ quality: 88 }).toBuffer();
-        } catch (err) {
-          log.warn('Foto ignorada no PDF', String(err));
-        }
-        doc.addPage();
-        const w = doc.page.width;
-        const h = doc.page.height;
-        const m = 40;
-        doc.font('Helvetica').fontSize(9).fillColor('#8a8a99');
-        doc.text(pdfText(ev.name) || 'Evento', m, 24, { width: w - 2 * m - 80, lineBreak: false, ellipsis: true });
-        doc.text(`${i + 1} / ${files.length}`, w - m - 80, 24, { width: 80, align: 'right', lineBreak: false });
-
-        const caption = pdfText(p.caption || '');
-        const capH = caption ? 110 : 0;
-        const boxX = m;
-        const boxY = 56;
-        const boxW = w - 2 * m;
-        const boxH = h - boxY - m - capH;
-        if (img) doc.image(img, boxX, boxY, { fit: [boxW, boxH], align: 'center', valign: 'center' });
-        else doc.fillColor('#999999').fontSize(12).text('(imagem indisponível)', boxX, boxY + boxH / 2, { width: boxW, align: 'center' });
-        if (caption) {
-          doc.font('Times-Italic').fontSize(caption.length > 90 ? 18 : 24).fillColor('#2b2b3a');
-          doc.text(`“${caption}”`, m + 20, h - m - capH + 24, { width: w - 2 * m - 40, height: capH - 30, align: 'center' });
-        }
-      }
-      doc.end();
-    })().catch((err) => {
-      log.error('Falha ao montar o PDF', String(err));
-      res.destroy(err as Error);
-    });
   });
 
   const photoAction = (fn: (eventId: string, photoId: string) => Promise<unknown>) =>
