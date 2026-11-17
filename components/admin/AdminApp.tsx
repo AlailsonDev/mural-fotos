@@ -170,9 +170,23 @@ function AdminShell({ onLogout }: { onLogout: () => void }) {
 
   useEffect(() => applyTheme(getTheme(themeId)), [themeId]);
 
+  // O tema salvo no servidor vale para todos os aparelhos (e para a página de envio).
+  useEffect(() => {
+    api<{ settings: { branding: { theme?: string } } }>('/api/admin/settings')
+      .then((r) => {
+        const id = r.settings.branding.theme;
+        if (id && getTheme(id).id === id) {
+          setThemeId(id);
+          saveThemeId(id);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
+
   const chooseTheme = (id: string) => {
     setThemeId(id);
     saveThemeId(id);
+    api('/api/admin/settings', { method: 'PATCH', json: { branding: { theme: id } } }).catch(() => undefined);
   };
 
   useEffect(() => {
@@ -313,7 +327,7 @@ function AdminShell({ onLogout }: { onLogout: () => void }) {
       )}
 
       <Modal open={themeOpen} onClose={() => setThemeOpen(false)} title="Tema do sistema" wide>
-        <p className="mb-4 text-sm text-slate-500">Escolha as cores do painel. A escolha fica salva neste navegador e é lembrada nas próximas vezes.</p>
+        <p className="mb-4 text-sm text-slate-500">Escolha as cores do painel. A escolha fica salva no sistema, vale para todos os aparelhos e também colore a página de envio que abre ao escanear o QR Code.</p>
         {(['light', 'dark'] as const).map((mode) => (
           <div key={mode} className="mb-5 last:mb-0">
             <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{mode === 'light' ? 'Claros' : 'Escuros'}</div>

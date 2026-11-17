@@ -71,6 +71,8 @@ export interface Branding {
   logoVersion: number;
   /** Moldura da tela de transmissão (id de lib/shared/frames). */
   frame: string;
+  /** Tema de cores do sistema (id de lib/shared/themes); a página de envio herda dele. */
+  theme: string;
 }
 
 export interface Settings {

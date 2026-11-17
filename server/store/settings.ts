@@ -5,6 +5,7 @@ import { readJson, writeJsonAtomic } from '../lib/jsonStore';
 import { Mutex } from '../lib/mutex';
 import { normalizeBaseUrl } from '../config';
 import { DEFAULT_FRAME, isFrame } from '../../lib/shared/frames';
+import { DEFAULT_THEME_ID, isTheme } from '../../lib/shared/themes';
 
 export const DEFAULT_SETTINGS: Settings = {
   maxFilesPerUpload: 3,
@@ -32,6 +33,7 @@ export const DEFAULT_SETTINGS: Settings = {
     hasLogo: false,
     logoVersion: 0,
     frame: DEFAULT_FRAME,
+    theme: DEFAULT_THEME_ID,
   },
 };
 
@@ -91,6 +93,7 @@ export function sanitizeSettings(input: Partial<Settings> & Record<string, unkno
       hasLogo: base.branding.hasLogo,
       logoVersion: base.branding.logoVersion,
       frame: isFrame(b.frame) ? b.frame : isFrame(base.branding.frame) ? base.branding.frame : DEFAULT_FRAME,
+      theme: isTheme(b.theme) ? b.theme : isTheme(base.branding.theme) ? base.branding.theme : DEFAULT_THEME_ID,
     },
   };
 }

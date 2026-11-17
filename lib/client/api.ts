@@ -2,6 +2,7 @@
 
 import type { Branding } from '../shared/types';
 import type { CSSProperties } from 'react';
+import { getTheme } from '../shared/themes';
 
 let csrfToken: string | null = null;
 export const setCsrfToken = (t: string | null) => {
@@ -39,10 +40,12 @@ export async function api<T = unknown>(url: string, init: RequestInit & { json?:
   return data as T;
 }
 
-export function brandStyle(b?: Pick<Branding, 'primaryColor' | 'secondaryColor'> | null): CSSProperties {
+export function brandStyle(b?: Pick<Branding, 'primaryColor' | 'secondaryColor'> & { theme?: string } | null): CSSProperties {
+  // Com tema escolhido pelo administrador, as cores vêm do tema.
+  const t = b?.theme ? getTheme(b.theme) : null;
   return {
-    ['--brand' as string]: b?.primaryColor || '#7c3aed',
-    ['--brand2' as string]: b?.secondaryColor || '#ec4899',
+    ['--brand' as string]: t?.brand || b?.primaryColor || '#7c3aed',
+    ['--brand2' as string]: t?.brand2 || b?.secondaryColor || '#ec4899',
   } as CSSProperties;
 }
 

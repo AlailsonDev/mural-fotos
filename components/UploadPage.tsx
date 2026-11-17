@@ -5,6 +5,7 @@ import { io, type Socket } from 'socket.io-client';
 import { Camera, CheckCircle2, CloudUpload, ImagePlus, Loader2, PauseCircle, PartyPopper, RefreshCw, X, AlertCircle, Clock } from 'lucide-react';
 import type { PublicStatus } from '@/lib/shared/types';
 import { eventFontCss } from '@/lib/shared/fonts';
+import { getTheme } from '@/lib/shared/themes';
 import { brandStyle, logoUrl, randomId, formatBytes } from '@/lib/client/api';
 
 interface Selected {
@@ -176,9 +177,12 @@ export default function UploadPage() {
 
   const b = status?.branding;
   const logo = logoUrl(b);
+  // A página de envio é escura: temas claros usam o tom escuro da barra lateral como fundo.
+  const theme = getTheme(b?.theme);
+  const pageBg = theme.mode === 'dark' ? theme.page : theme.side;
 
   return (
-    <main style={brandStyle(b)} className="relative min-h-dvh overflow-hidden bg-[#0b0b12] text-white">
+    <main style={{ ...brandStyle(b), backgroundColor: pageBg }} className="relative min-h-dvh overflow-hidden bg-[#0b0b12] text-white">
       {status?.state !== 'closed' && (
         <>
           <div className="blob -left-24 -top-24 h-80 w-80 brand-gradient" />
