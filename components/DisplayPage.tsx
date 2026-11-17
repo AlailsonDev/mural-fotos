@@ -5,6 +5,7 @@ import { io, type Socket } from 'socket.io-client';
 import { Maximize, Minimize, Pause, Wifi, WifiOff, Images, KeyRound, Loader2, Camera } from 'lucide-react';
 import type { DisplayStatus } from '@/lib/shared/types';
 import { eventFontCss } from '@/lib/shared/fonts';
+import { getFrame, type FrameDef } from '@/lib/shared/frames';
 import { brandStyle, logoUrl } from '@/lib/client/api';
 
 type Auth = 'checking' | 'ok' | 'need-key';
@@ -295,6 +296,7 @@ export default function DisplayPage() {
         : 0;
   const waiting = !showingPhoto;
   const logo = logoUrl(status?.branding);
+  const frame = getFrame(status?.branding?.frame);
 
   return (
     <div
@@ -304,12 +306,11 @@ export default function DisplayPage() {
     >
       {/* Painel lateral: QR Code sempre visível ao lado da foto em destaque */}
       <aside className="absolute inset-y-0 right-0 z-[5] flex w-[28%] flex-col items-center justify-center gap-[3vmin] border-l border-white/10 bg-[#07070c] px-[2.5vmin] text-center">
-        <div className="blob left-[-20%] top-[5%] h-[35vmin] w-[35vmin] brand-gradient" />
         {logo && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={logo} alt="" className="relative h-[16vmin] w-auto max-w-full object-contain" />
         )}
-        {status?.event && <h2 className="brand-text relative text-[4.4vmin] font-extrabold leading-tight" style={{ fontFamily: eventFontCss(status.event.nameFont) }}>{status.event.name}</h2>}
+        {status?.event && <h2 className="relative text-[4.4vmin] font-extrabold leading-tight" style={{ fontFamily: eventFontCss(status.event.nameFont) }}>{status.event.name}</h2>}
         {status?.qrUrl && (
           <div className="relative flex flex-col items-center">
             <div className="rounded-[2.4vmin] bg-white p-[1.8vmin] shadow-2xl shadow-black/60">
@@ -324,6 +325,7 @@ export default function DisplayPage() {
 
       {/* Camadas de fotos (duas, alternadas, para transição cruzada suave) */}
       <div className="absolute inset-y-0 left-0 w-[72%] overflow-hidden">
+      <div className="absolute overflow-hidden" style={{ inset: `${frame.inset}vmin` }}>
       {slots.map((slot, idx) => {
         const visible = showingPhoto && idx === front && !!slot.url;
         return (
@@ -368,6 +370,8 @@ export default function DisplayPage() {
         );
       })}
       </div>
+      <FrameOverlay frame={frame} />
+      </div>
 
       {/* Tela de espera */}
       <div
@@ -375,6 +379,7 @@ export default function DisplayPage() {
         style={{ opacity: waiting ? 1 : 0, transitionDuration: '900ms', pointerEvents: waiting ? 'auto' : 'none' }}
       >
         <WaitingScreen status={status} connected={connected} logo={logo} />
+        <FrameOverlay frame={frame} />
       </div>
 
       {/* Indicadores discretos */}
@@ -432,6 +437,11 @@ export default function DisplayPage() {
   );
 }
 
+function FrameOverlay({ frame }: { frame: FrameDef }) {
+  if (!frame.inset) return null;
+  return <div aria-hidden className="pointer-events-none absolute inset-0 z-[6] box-border" style={frame.css(`${frame.inset}vmin`) as React.CSSProperties} />;
+}
+
 const INVITE = 'Escaneie o QR Code e envie sua foto para aparecer no telão!';
 
 function WaitingScreen({ status, connected, logo }: { status: DisplayStatus | null; connected: boolean; logo: string | null }) {
@@ -439,21 +449,19 @@ function WaitingScreen({ status, connected, logo }: { status: DisplayStatus | nu
   const ev = status?.event;
   return (
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#07070c]">
-      <div className="blob left-[5%] top-[10%] h-[40vmin] w-[40vmin] brand-gradient" />
-      <div className="blob bottom-[5%] right-[8%] h-[45vmin] w-[45vmin] bg-[var(--brand2)]" style={{ animationDelay: '-11s' }} />
       <div className="relative z-10 flex w-full max-w-[1500px] flex-col items-center gap-[5vmin] px-[6vmin] lg:flex-row lg:justify-between">
         <div className="max-w-[55vw] text-center lg:text-left">
           {logo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logo} alt="" className="mx-auto mb-[3vmin] h-[22vmin] w-auto max-w-[50vw] object-contain lg:mx-0" />
           ) : (
-            <div className="mx-auto mb-[3vmin] grid h-[10vmin] w-[10vmin] place-items-center rounded-[2.5vmin] brand-gradient lg:mx-0">
+            <div className="mx-auto mb-[3vmin] grid h-[10vmin] w-[10vmin] place-items-center rounded-[2.5vmin] bg-white/10 ring-1 ring-white/15 lg:mx-0">
               <Camera className="h-[5vmin] w-[5vmin]" />
             </div>
           )}
           <p className="mb-[1.5vmin] text-[2.2vmin] font-semibold uppercase tracking-[0.3em] text-white/50">{b?.systemName || 'Mural de Fotos'}</p>
           <h1 className="mb-[3vmin] text-[7vmin] font-extrabold leading-[1.05]">
-            {ev ? <span className="brand-text" style={{ fontFamily: eventFontCss(ev.nameFont) }}>{ev.name}</span> : 'Em breve'}
+            {ev ? <span style={{ fontFamily: eventFontCss(ev.nameFont) }}>{ev.name}</span> : 'Em breve'}
           </h1>
           <p className="text-[3.4vmin] font-medium leading-snug text-white/85">
             {ev ? b?.waitingMessage || INVITE : 'Nenhum evento recebendo fotografias no momento.'}

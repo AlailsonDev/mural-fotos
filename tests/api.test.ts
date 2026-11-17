@@ -216,6 +216,15 @@ describe('Fonte do nome do evento', () => {
   });
 });
 
+describe('Moldura da tela de transmissão', () => {
+  it('salva a moldura escolhida e ignora valores inválidos', async () => {
+    await ts.svc.settings.update({ branding: { frame: 'dourada' } } as never);
+    expect(ts.svc.settings.get().branding.frame).toBe('dourada');
+    await ts.svc.settings.update({ branding: { frame: 'inexistente' } } as never);
+    expect(ts.svc.settings.get().branding.frame).toBe('dourada');
+  });
+});
+
 describe('Legendas', () => {
   it('guarda a legenda enviada (saneada) e a repassa à transmissão', async () => {
     const ev = await activeEvent(ts.svc, 'Evento da legenda');

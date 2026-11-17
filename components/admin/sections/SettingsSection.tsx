@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Save, Upload, Trash2, Eraser, LogOut } from 'lucide-react';
+import { Save, Upload, Trash2, Eraser, LogOut, Check } from 'lucide-react';
 import { api, ApiError, logoUrl } from '@/lib/client/api';
 import type { Settings } from '@/lib/shared/types';
+import { FRAMES } from '@/lib/shared/frames';
 import type { LiveState } from '../AdminApp';
 import { SectionHeader, Spinner, useConfirm, useToast } from '../ui';
 
@@ -205,15 +206,29 @@ export default function SettingsSection(_: { live: LiveState }) {
                 <label className="label">Nome do sistema</label>
                 <input className="input" maxLength={60} value={s.branding.systemName} onChange={(e) => setB('systemName', e.target.value)} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="label">Cor principal</label>
-                  <input type="color" className="h-11 w-full cursor-pointer rounded-xl border border-slate-200 bg-surface p-1" value={s.branding.primaryColor} onChange={(e) => setB('primaryColor', e.target.value)} />
+              <div className="sm:col-span-2">
+                <label className="label">Moldura da tela de transmissão</label>
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                  {FRAMES.map((f) => {
+                    const on = (s.branding.frame || 'nenhuma') === f.id;
+                    return (
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={() => setB('frame', f.id)}
+                        aria-pressed={on}
+                        className={`rounded-xl border p-2 text-left transition ${on ? 'border-violet-500 ring-2 ring-violet-200' : 'border-slate-200 hover:border-slate-300'}`}
+                      >
+                        <div className="h-14 w-full bg-[#0f0f1a]" style={f.inset ? (f.css('7px') as React.CSSProperties) : { border: '1px dashed rgba(255,255,255,0.25)' }} />
+                        <div className="mt-1.5 flex items-center justify-between gap-1 px-0.5 text-xs font-medium text-slate-700">
+                          <span className="truncate">{f.label}</span>
+                          {on && <Check className="h-3.5 w-3.5 shrink-0 text-violet-600" />}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
-                <div>
-                  <label className="label">Cor secundária</label>
-                  <input type="color" className="h-11 w-full cursor-pointer rounded-xl border border-slate-200 bg-surface p-1" value={s.branding.secondaryColor} onChange={(e) => setB('secondaryColor', e.target.value)} />
-                </div>
+                <p className="mt-1.5 text-xs text-slate-500">A moldura contorna a foto em destaque e a tela de espera. Lembre de salvar.</p>
               </div>
               <div className="sm:col-span-2">
                 <label className="label">Mensagem de boas-vindas (página de envio)</label>

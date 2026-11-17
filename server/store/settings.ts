@@ -4,6 +4,7 @@ import type { Settings, TransmissionMode } from '../../lib/shared/types';
 import { readJson, writeJsonAtomic } from '../lib/jsonStore';
 import { Mutex } from '../lib/mutex';
 import { normalizeBaseUrl } from '../config';
+import { DEFAULT_FRAME, isFrame } from '../../lib/shared/frames';
 
 export const DEFAULT_SETTINGS: Settings = {
   maxFilesPerUpload: 3,
@@ -30,6 +31,7 @@ export const DEFAULT_SETTINGS: Settings = {
     waitingMessage: 'Queremos ver este momento pelos seus olhos!',
     hasLogo: false,
     logoVersion: 0,
+    frame: DEFAULT_FRAME,
   },
 };
 
@@ -88,6 +90,7 @@ export function sanitizeSettings(input: Partial<Settings> & Record<string, unkno
       waitingMessage: str(b.waitingMessage, 200, base.branding.waitingMessage),
       hasLogo: base.branding.hasLogo,
       logoVersion: base.branding.logoVersion,
+      frame: isFrame(b.frame) ? b.frame : isFrame(base.branding.frame) ? base.branding.frame : DEFAULT_FRAME,
     },
   };
 }

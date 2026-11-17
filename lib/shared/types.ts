@@ -69,6 +69,8 @@ export interface Branding {
   waitingMessage: string;
   hasLogo: boolean;
   logoVersion: number;
+  /** Moldura da tela de transmissão (id de lib/shared/frames). */
+  frame: string;
 }
 
 export interface Settings {
