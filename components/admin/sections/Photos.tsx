@@ -188,7 +188,7 @@ export default function PhotosSection({ live }: { live: LiveState }) {
               <button
                 key={t.id}
                 onClick={() => { setTab(t.id); setPhotos(null); }}
-                className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-medium transition ${tab === t.id ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'}`}
+                className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-medium transition ${tab === t.id ? 'brand-gradient text-white' : 'bg-surface text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'}`}
               >
                 {t.label}
                 {stats && t.key && <span className={`ml-2 rounded-md px-1.5 text-xs ${tab === t.id ? 'bg-white/20' : 'bg-slate-100'}`}>{stats[t.key]}</span>}
@@ -230,7 +230,7 @@ export default function PhotosSection({ live }: { live: LiveState }) {
       <Modal open={!!preview} onClose={() => setPreview(null)} title="Fotografia" wide>
         {preview && (
           <div>
-            <div className="mb-4 flex max-h-[60dvh] justify-center overflow-hidden rounded-2xl bg-slate-900">
+            <div className="mb-4 flex max-h-[60dvh] justify-center overflow-hidden rounded-2xl bg-black">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={preview.url} alt="" className="max-h-[60dvh] w-auto object-contain" />
             </div>

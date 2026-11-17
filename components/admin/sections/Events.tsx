@@ -284,7 +284,7 @@ export default function EventsSection({ live, go }: { live: LiveState; go: (s: S
                     type="button"
                     onClick={() => setForm({ ...form, nameFont: f.id })}
                     aria-pressed={form.nameFont === f.id}
-                    className={`rounded-xl border px-3 py-2 text-left transition ${form.nameFont === f.id ? 'border-violet-500 bg-violet-50 ring-2 ring-violet-200' : 'border-slate-200 bg-white hover:bg-slate-50'}`}
+                    className={`rounded-xl border px-3 py-2 text-left transition ${form.nameFont === f.id ? 'border-violet-500 bg-violet-50 ring-2 ring-violet-200' : 'border-slate-200 bg-surface hover:bg-slate-50'}`}
                   >
                     <span className="block truncate text-2xl leading-tight text-slate-900" style={{ fontFamily: f.css }}>
                       {form.name.trim() || 'Nome do evento'}

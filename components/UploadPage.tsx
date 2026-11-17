@@ -179,8 +179,12 @@ export default function UploadPage() {
 
   return (
     <main style={brandStyle(b)} className="relative min-h-dvh overflow-hidden bg-[#0b0b12] text-white">
-      <div className="blob -left-24 -top-24 h-80 w-80 brand-gradient" />
-      <div className="blob -bottom-24 -right-24 h-80 w-80 bg-[var(--brand2)]" style={{ animationDelay: '-8s' }} />
+      {status?.state !== 'closed' && (
+        <>
+          <div className="blob -left-24 -top-24 h-80 w-80 brand-gradient" />
+          <div className="blob -bottom-24 -right-24 h-80 w-80 bg-[var(--brand2)]" style={{ animationDelay: '-8s' }} />
+        </>
+      )}
 
       <div className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pb-8 pt-8">
         <header className="mb-6 flex flex-col items-center text-center animate-fade-in">
@@ -188,7 +192,7 @@ export default function UploadPage() {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logo} alt="" className="mb-4 h-32 w-auto max-w-[300px] object-contain drop-shadow-lg" />
           ) : (
-            <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl brand-gradient shadow-lg shadow-black/40">
+            <div className={`mb-4 grid h-16 w-16 place-items-center rounded-2xl shadow-lg shadow-black/40 ${status?.state === 'closed' ? 'bg-white/10 ring-1 ring-white/15' : 'brand-gradient'}`}>
               <Camera className="h-8 w-8" />
             </div>
           )}

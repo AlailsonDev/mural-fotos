@@ -75,7 +75,7 @@ export default function HistorySection({ live }: { live: LiveState }) {
         {log.length === 0 ? (
           <p className="text-sm text-slate-500">Nenhuma operação de limpeza registrada.</p>
         ) : (
-          <pre className="max-h-64 overflow-auto rounded-xl bg-slate-950 p-4 text-xs leading-relaxed text-slate-300">{log.join('\n')}</pre>
+          <pre className="max-h-64 overflow-auto rounded-xl bg-[#07070c] p-4 text-xs leading-relaxed text-[#cbd5e1]">{log.join('\n')}</pre>
         )}
       </div>
     </>

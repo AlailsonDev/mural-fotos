@@ -19,10 +19,13 @@ import {
   WifiOff,
   Eye,
   EyeOff,
+  Palette,
+  Check,
 } from 'lucide-react';
 import { api, setCsrfToken, ApiError, brandStyle } from '@/lib/client/api';
 import type { EventRecord, EventStats, PlaybackSnapshot } from '@/lib/shared/types';
-import { ConfirmProvider, ToastProvider, Spinner } from './ui';
+import { ADMIN_THEMES, applyTheme, getTheme, loadThemeId, saveThemeId } from '@/lib/client/themes';
+import { ConfirmProvider, ToastProvider, Spinner, Modal } from './ui';
 import Dashboard from './sections/Dashboard';
 import EventsSection from './sections/Events';
 import PhotosSection from './sections/Photos';
@@ -164,6 +167,15 @@ function AdminShell({ onLogout }: { onLogout: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [live, setLive] = useState<LiveState>({ playback: null, event: null, connected: false, version: 0 });
   const socketRef = useRef<Socket | null>(null);
+  const [themeId, setThemeId] = useState<string>(() => loadThemeId());
+  const [themeOpen, setThemeOpen] = useState(false);
+
+  useEffect(() => applyTheme(getTheme(themeId)), [themeId]);
+
+  const chooseTheme = (id: string) => {
+    setThemeId(id);
+    saveThemeId(id);
+  };
 
   useEffect(() => {
     const fromHash = window.location.hash.replace('#', '') as SectionId;
@@ -225,7 +237,7 @@ function AdminShell({ onLogout }: { onLogout: () => void }) {
             key={n.id}
             onClick={() => go(n.id)}
             className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-              active ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+              active ? 'bg-white/10 text-white' : 'text-[#94a3b8] hover:bg-white/5 hover:text-white'
             }`}
           >
             <Icon className="h-[18px] w-[18px]" />
@@ -239,11 +251,15 @@ function AdminShell({ onLogout }: { onLogout: () => void }) {
 
   const sidebarFooter = (
     <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
-      <div className="flex items-center gap-2 px-3 text-xs text-slate-400">
+      <div className="flex items-center gap-2 px-3 text-xs text-[#94a3b8]">
         {live.connected ? <Wifi className="h-3.5 w-3.5 text-emerald-400" /> : <WifiOff className="h-3.5 w-3.5 text-rose-400" />}
         {live.connected ? 'Tempo real conectado' : 'Reconectando...'}
       </div>
-      <button onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 hover:bg-white/5 hover:text-white">
+      <button onClick={() => setThemeOpen(true)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#94a3b8] hover:bg-white/5 hover:text-white">
+        <Palette className="h-[18px] w-[18px]" /> Tema
+        <span className="ml-auto h-3.5 w-3.5 rounded-full ring-2 ring-white/30 brand-gradient" />
+      </button>
+      <button onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#94a3b8] hover:bg-white/5 hover:text-white">
         <LogOut className="h-[18px] w-[18px]" /> Sair
       </button>
     </div>
@@ -256,7 +272,7 @@ function AdminShell({ onLogout }: { onLogout: () => void }) {
       </div>
       <div>
         <div className="text-sm font-bold text-white">Mural de Fotos</div>
-        <div className="text-xs text-slate-400">Administração</div>
+        <div className="text-xs text-[#94a3b8]">Administração</div>
       </div>
     </div>
   );
@@ -264,16 +280,16 @@ function AdminShell({ onLogout }: { onLogout: () => void }) {
   const props = { live, go };
 
   return (
-    <div style={brandStyle(null)} className="min-h-dvh bg-slate-50 text-slate-900">
+    <div className="min-h-dvh bg-[var(--page,#f8fafc)] text-slate-900">
       {/* Barra lateral (desktop) */}
-      <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col bg-[#0f0f1a] p-4 lg:flex">
+      <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col bg-[var(--side,#0f0f1a)] p-4 lg:flex">
         {brand}
         {nav}
         {sidebarFooter}
       </aside>
 
       {/* Barra superior (celular) */}
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-surface/90 px-4 py-3 backdrop-blur lg:hidden">
         <div className="flex items-center gap-2 font-bold">
           <div className="grid h-8 w-8 place-items-center rounded-lg brand-gradient text-white">
             <Camera className="h-4 w-4" />
@@ -286,9 +302,9 @@ function AdminShell({ onLogout }: { onLogout: () => void }) {
       </header>
       {menuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setMenuOpen(false)}>
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
-          <aside className="absolute inset-y-0 left-0 flex w-72 flex-col bg-[#0f0f1a] p-4 animate-fade-in" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setMenuOpen(false)} className="absolute right-3 top-3 rounded-lg p-2 text-slate-400 hover:text-white" aria-label="Fechar menu">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <aside className="absolute inset-y-0 left-0 flex w-72 flex-col bg-[var(--side,#0f0f1a)] p-4 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setMenuOpen(false)} className="absolute right-3 top-3 rounded-lg p-2 text-[#94a3b8] hover:text-white" aria-label="Fechar menu">
               <X className="h-5 w-5" />
             </button>
             {brand}
@@ -297,6 +313,40 @@ function AdminShell({ onLogout }: { onLogout: () => void }) {
           </aside>
         </div>
       )}
+
+      <Modal open={themeOpen} onClose={() => setThemeOpen(false)} title="Tema do sistema" wide>
+        <p className="mb-4 text-sm text-slate-500">Escolha as cores do painel. A escolha fica salva neste navegador e é lembrada nas próximas vezes.</p>
+        {(['light', 'dark'] as const).map((mode) => (
+          <div key={mode} className="mb-5 last:mb-0">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{mode === 'light' ? 'Claros' : 'Escuros'}</div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {ADMIN_THEMES.filter((t) => t.mode === mode).map((t) => {
+                const on = t.id === themeId;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => chooseTheme(t.id)}
+                    aria-pressed={on}
+                    className={`group rounded-2xl border p-2 text-left transition ${on ? 'border-violet-500 ring-2 ring-violet-200' : 'border-slate-200 hover:border-slate-300'}`}
+                  >
+                    <div className="flex h-16 overflow-hidden rounded-xl" style={{ background: t.page }}>
+                      <div className="w-1/4" style={{ background: t.side }} />
+                      <div className="flex flex-1 flex-col justify-center gap-1.5 p-2">
+                        <div className="h-2 w-3/4 rounded-full" style={{ background: t.surface, boxShadow: '0 0 0 1px rgba(128,128,128,.25)' }} />
+                        <div className="h-2.5 w-1/2 rounded-full" style={{ backgroundImage: `linear-gradient(90deg, ${t.brand}, ${t.brand2})` }} />
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between px-1 text-sm font-medium text-slate-700">
+                      {t.label}
+                      {on && <Check className="h-4 w-4 text-violet-600" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </Modal>
 
       <main className="px-4 py-6 sm:px-6 lg:ml-64 lg:px-10 lg:py-10">
         <div className="mx-auto max-w-6xl animate-fade-in" key={section}>

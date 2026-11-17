@@ -117,7 +117,7 @@ export default function TransmissionSection({ live }: { live: LiveState }) {
                       key={s}
                       disabled={saving}
                       onClick={() => { setCustom(''); save({ displaySeconds: s }, `Tempo de exibição: ${s} segundos.`); }}
-                      className={`rounded-xl py-2.5 text-sm font-semibold transition ${settings.displaySeconds === s ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                      className={`rounded-xl py-2.5 text-sm font-semibold transition ${settings.displaySeconds === s ? 'brand-gradient text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
                     >
                       {s}s
                     </button>

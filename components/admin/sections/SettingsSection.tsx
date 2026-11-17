@@ -208,11 +208,11 @@ export default function SettingsSection(_: { live: LiveState }) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="label">Cor principal</label>
-                  <input type="color" className="h-11 w-full cursor-pointer rounded-xl border border-slate-200 bg-white p-1" value={s.branding.primaryColor} onChange={(e) => setB('primaryColor', e.target.value)} />
+                  <input type="color" className="h-11 w-full cursor-pointer rounded-xl border border-slate-200 bg-surface p-1" value={s.branding.primaryColor} onChange={(e) => setB('primaryColor', e.target.value)} />
                 </div>
                 <div>
                   <label className="label">Cor secundária</label>
-                  <input type="color" className="h-11 w-full cursor-pointer rounded-xl border border-slate-200 bg-white p-1" value={s.branding.secondaryColor} onChange={(e) => setB('secondaryColor', e.target.value)} />
+                  <input type="color" className="h-11 w-full cursor-pointer rounded-xl border border-slate-200 bg-surface p-1" value={s.branding.secondaryColor} onChange={(e) => setB('secondaryColor', e.target.value)} />
                 </div>
               </div>
               <div className="sm:col-span-2">
@@ -226,7 +226,7 @@ export default function SettingsSection(_: { live: LiveState }) {
               <div className="sm:col-span-2">
                 <label className="label">Logotipo</label>
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="grid h-16 w-28 place-items-center overflow-hidden rounded-xl bg-slate-900 p-2">
+                  <div className="grid h-16 w-28 place-items-center overflow-hidden rounded-xl bg-[#0f0f1a] p-2">
                     {logo ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={logo} alt="Logotipo" className="max-h-full max-w-full object-contain" />
