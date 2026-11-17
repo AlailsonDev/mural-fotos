@@ -202,6 +202,20 @@ describe('Administração de fotografias e eventos', () => {
   });
 });
 
+describe('Fonte do nome do evento', () => {
+  it('salva a fonte escolhida, ignora valores inválidos e a expõe nas telas', async () => {
+    const { agent, csrf } = await adminAgent(ts.server);
+    const bad = await agent.post('/api/admin/events').set('X-CSRF-Token', csrf).send({ name: 'Fonte inválida', nameFont: 'nao-existe' }).expect(201);
+    expect(bad.body.nameFont).toBe('padrao');
+    const ok = await agent.post('/api/admin/events').set('X-CSRF-Token', csrf).send({ name: 'Festa cursiva', nameFont: 'pacifico', startNow: true, finishCurrent: true }).expect(201);
+    expect(ok.body.nameFont).toBe('pacifico');
+    const pub = await request(ts.server).get('/api/public/status').expect(200);
+    expect(pub.body.event).toMatchObject({ name: 'Festa cursiva', nameFont: 'pacifico' });
+    const upd = await agent.patch(`/api/admin/events/${ok.body.id}`).set('X-CSRF-Token', csrf).send({ nameFont: 'lobster' }).expect(200);
+    expect(upd.body.nameFont).toBe('lobster');
+  });
+});
+
 describe('Legendas', () => {
   it('guarda a legenda enviada (saneada) e a repassa à transmissão', async () => {
     const ev = await activeEvent(ts.svc, 'Evento da legenda');

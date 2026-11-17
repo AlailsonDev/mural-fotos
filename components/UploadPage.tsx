@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { Camera, CheckCircle2, CloudUpload, ImagePlus, Loader2, PauseCircle, PartyPopper, RefreshCw, X, AlertCircle, Clock } from 'lucide-react';
 import type { PublicStatus } from '@/lib/shared/types';
+import { eventFontCss } from '@/lib/shared/fonts';
 import { brandStyle, logoUrl, randomId, formatBytes } from '@/lib/client/api';
 
 interface Selected {
@@ -185,14 +186,14 @@ export default function UploadPage() {
         <header className="mb-6 flex flex-col items-center text-center animate-fade-in">
           {logo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logo} alt="" className="mb-4 h-20 w-auto max-w-[200px] object-contain drop-shadow-lg" />
+            <img src={logo} alt="" className="mb-4 h-32 w-auto max-w-[300px] object-contain drop-shadow-lg" />
           ) : (
             <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl brand-gradient shadow-lg shadow-black/40">
               <Camera className="h-8 w-8" />
             </div>
           )}
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">{b?.systemName || 'Mural de Fotos'}</p>
-          {status?.event && <h1 className="mt-1 text-2xl font-bold leading-tight sm:text-3xl">{status.event.name}</h1>}
+          {status?.event && <h1 className="mt-1 text-3xl font-bold leading-tight sm:text-4xl" style={{ fontFamily: eventFontCss(status.event.nameFont) }}>{status.event.name}</h1>}
         </header>
 
         {!status && !loadError && (

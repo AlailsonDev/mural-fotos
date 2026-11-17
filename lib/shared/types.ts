@@ -9,6 +9,8 @@ export interface EventRecord {
   id: string;
   name: string;
   description: string;
+  /** Fonte usada para exibir o nome do evento (id de lib/shared/fonts). */
+  nameFont?: string;
   status: EventStatus;
   createdAt: string;
   scheduledStart: string | null;
@@ -118,7 +120,7 @@ export interface PlaybackSnapshot {
 
 export interface DisplayStatus {
   playback: PlaybackSnapshot;
-  event: { id: string; name: string; status: EventStatus } | null;
+  event: { id: string; name: string; nameFont: string; status: EventStatus } | null;
   branding: Branding;
   showIndicators: boolean;
   blurBackground: boolean;
@@ -129,7 +131,7 @@ export interface DisplayStatus {
 export interface PublicStatus {
   systemName: string;
   branding: Branding;
-  event: { name: string; description: string } | null;
+  event: { name: string; nameFont: string; description: string } | null;
   state: 'open' | 'paused' | 'closed';
   limits: { maxFiles: number; maxFileSizeMB: number; accept: string[] };
 }

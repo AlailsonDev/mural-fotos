@@ -43,7 +43,7 @@ export function publicStatus(svc: Services): PublicStatus {
   return {
     systemName: s.branding.systemName,
     branding: s.branding,
-    event: ev ? { name: ev.name, description: ev.description } : null,
+    event: ev ? { name: ev.name, nameFont: ev.nameFont || 'padrao', description: ev.description } : null,
     state: !ev ? 'closed' : ev.status === 'active' ? 'open' : 'paused',
     limits: { maxFiles: s.maxFilesPerUpload, maxFileSizeMB: s.maxFileSizeMB, accept: ['image/jpeg', 'image/png', 'image/webp'] },
   };
@@ -54,7 +54,7 @@ export function displayStatus(svc: Services): DisplayStatus {
   const ev = svc.store.getCurrentEvent();
   return {
     playback: svc.engine.snapshot(),
-    event: ev ? { id: ev.id, name: ev.name, status: ev.status } : null,
+    event: ev ? { id: ev.id, name: ev.name, nameFont: ev.nameFont || 'padrao', status: ev.status } : null,
     branding: s.branding,
     showIndicators: s.showIndicators,
     blurBackground: s.blurBackground,

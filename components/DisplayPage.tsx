@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { Maximize, Minimize, Pause, Wifi, WifiOff, Images, KeyRound, Loader2, Camera } from 'lucide-react';
 import type { DisplayStatus } from '@/lib/shared/types';
+import { eventFontCss } from '@/lib/shared/fonts';
 import { brandStyle, logoUrl } from '@/lib/client/api';
 
 type Auth = 'checking' | 'ok' | 'need-key';
@@ -306,9 +307,9 @@ export default function DisplayPage() {
         <div className="blob left-[-20%] top-[5%] h-[35vmin] w-[35vmin] brand-gradient" />
         {logo && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={logo} alt="" className="relative h-[9vmin] w-auto max-w-full object-contain" />
+          <img src={logo} alt="" className="relative h-[16vmin] w-auto max-w-full object-contain" />
         )}
-        {status?.event && <h2 className="brand-text relative text-[3.4vmin] font-extrabold leading-tight">{status.event.name}</h2>}
+        {status?.event && <h2 className="brand-text relative text-[4.4vmin] font-extrabold leading-tight" style={{ fontFamily: eventFontCss(status.event.nameFont) }}>{status.event.name}</h2>}
         {status?.qrUrl && (
           <div className="relative flex flex-col items-center">
             <div className="rounded-[2.4vmin] bg-white p-[1.8vmin] shadow-2xl shadow-black/60">
@@ -444,7 +445,7 @@ function WaitingScreen({ status, connected, logo }: { status: DisplayStatus | nu
         <div className="max-w-[55vw] text-center lg:text-left">
           {logo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logo} alt="" className="mx-auto mb-[3vmin] h-[12vmin] w-auto object-contain lg:mx-0" />
+            <img src={logo} alt="" className="mx-auto mb-[3vmin] h-[22vmin] w-auto max-w-[50vw] object-contain lg:mx-0" />
           ) : (
             <div className="mx-auto mb-[3vmin] grid h-[10vmin] w-[10vmin] place-items-center rounded-[2.5vmin] brand-gradient lg:mx-0">
               <Camera className="h-[5vmin] w-[5vmin]" />
@@ -452,7 +453,7 @@ function WaitingScreen({ status, connected, logo }: { status: DisplayStatus | nu
           )}
           <p className="mb-[1.5vmin] text-[2.2vmin] font-semibold uppercase tracking-[0.3em] text-white/50">{b?.systemName || 'Mural de Fotos'}</p>
           <h1 className="mb-[3vmin] text-[7vmin] font-extrabold leading-[1.05]">
-            {ev ? <span className="brand-text">{ev.name}</span> : 'Em breve'}
+            {ev ? <span className="brand-text" style={{ fontFamily: eventFontCss(ev.nameFont) }}>{ev.name}</span> : 'Em breve'}
           </h1>
           <p className="text-[3.4vmin] font-medium leading-snug text-white/85">
             {ev ? b?.waitingMessage || INVITE : 'Nenhum evento recebendo fotografias no momento.'}

@@ -39,7 +39,7 @@ export default function QrPrint() {
       <div className="flex flex-col items-center">
         {logo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={logo} alt="" className={small ? 'mb-2 h-12' : 'mb-4 h-24'} />
+          <img src={logo} alt="" className={small ? 'mb-2 h-20' : 'mb-4 h-40'} />
         ) : (
           <div className={`brand-gradient mb-3 grid place-items-center rounded-2xl text-white ${small ? 'h-10 w-10' : 'h-16 w-16'}`}>
             <Camera className={small ? 'h-5 w-5' : 'h-8 w-8'} />

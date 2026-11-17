@@ -8,6 +8,7 @@ import { Mutex } from '../lib/mutex';
 import { isUuid, newId } from '../lib/ids';
 import { AppError, badRequest, conflict, notFound } from '../lib/errors';
 import { log } from '../lib/logger';
+import { DEFAULT_EVENT_FONT, isEventFont } from '../../lib/shared/fonts';
 
 export const EVENT_SUBDIRS = ['uploads', 'displayed', 'rejected', 'thumbs', 'originals'] as const;
 
@@ -202,7 +203,7 @@ export class EventStore extends EventEmitter {
   }
 
   // ------------------------------------------------------------------ eventos
-  createEvent(input: { name: string; description?: string; scheduledStart?: string | null; scheduledEnd?: string | null }) {
+  createEvent(input: { name: string; nameFont?: string; description?: string; scheduledStart?: string | null; scheduledEnd?: string | null }) {
     return this.mutex.run(async () => {
       const name = String(input.name || '').trim().slice(0, 100);
       if (!name) throw badRequest('Informe o nome do evento.');
@@ -210,6 +211,7 @@ export class EventStore extends EventEmitter {
         id: newId(),
         name,
         description: String(input.description || '').trim().slice(0, 500),
+        nameFont: isEventFont(input.nameFont) ? input.nameFont : DEFAULT_EVENT_FONT,
         status: 'planned',
         createdAt: new Date().toISOString(),
         scheduledStart: parseDate(input.scheduledStart),
@@ -232,7 +234,7 @@ export class EventStore extends EventEmitter {
     });
   }
 
-  updateEvent(id: string, patch: { name?: string; description?: string; scheduledStart?: string | null; scheduledEnd?: string | null }) {
+  updateEvent(id: string, patch: { name?: string; nameFont?: string; description?: string; scheduledStart?: string | null; scheduledEnd?: string | null }) {
     return this.mutex.run(async () => {
       const ev = this.mustEvent(id);
       if (patch.name !== undefined) {
@@ -240,6 +242,7 @@ export class EventStore extends EventEmitter {
         if (!name) throw badRequest('Informe o nome do evento.');
         ev.name = name;
       }
+      if (patch.nameFont !== undefined) ev.nameFont = isEventFont(patch.nameFont) ? patch.nameFont : DEFAULT_EVENT_FONT;
       if (patch.description !== undefined) ev.description = String(patch.description).trim().slice(0, 500);
       if (patch.scheduledStart !== undefined) ev.scheduledStart = parseDate(patch.scheduledStart);
       if (patch.scheduledEnd !== undefined) ev.scheduledEnd = parseDate(patch.scheduledEnd);
@@ -564,6 +567,7 @@ function normalizeEvent(ev: EventRecord): EventRecord {
     id: ev.id,
     name: ev.name || 'Evento',
     description: ev.description || '',
+    nameFont: isEventFont(ev.nameFont) ? ev.nameFont : DEFAULT_EVENT_FONT,
     status: statuses.includes(ev.status) ? ev.status : 'planned',
     createdAt: ev.createdAt || new Date().toISOString(),
     scheduledStart: ev.scheduledStart ?? null,

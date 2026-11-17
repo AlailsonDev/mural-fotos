@@ -1,5 +1,6 @@
 'use client';
 
+import { EVENT_FONTS, DEFAULT_EVENT_FONT } from '@/lib/shared/fonts';
 import { useCallback, useEffect, useState } from 'react';
 import { CalendarPlus, Play, Pause, Square, Pencil, Trash2, Eraser, CalendarDays, Images } from 'lucide-react';
 import { api, ApiError, formatDateTime } from '@/lib/client/api';
@@ -9,12 +10,13 @@ import { EventBadge, Modal, SectionHeader, EmptyState, Spinner, useConfirm, useT
 interface FormState {
   id?: string;
   name: string;
+  nameFont: string;
   description: string;
   scheduledStart: string;
   scheduledEnd: string;
   startNow: boolean;
 }
-const emptyForm: FormState = { name: '', description: '', scheduledStart: '', scheduledEnd: '', startNow: false };
+const emptyForm: FormState = { name: '', nameFont: DEFAULT_EVENT_FONT, description: '', scheduledStart: '', scheduledEnd: '', startNow: false };
 
 const toLocalInput = (iso: string | null) => {
   if (!iso) return '';
@@ -122,6 +124,7 @@ export default function EventsSection({ live, go }: { live: LiveState; go: (s: S
     try {
       const body = {
         name: form.name,
+        nameFont: form.nameFont,
         description: form.description,
         scheduledStart: form.scheduledStart ? new Date(form.scheduledStart).toISOString() : null,
         scheduledEnd: form.scheduledEnd ? new Date(form.scheduledEnd).toISOString() : null,
@@ -239,7 +242,7 @@ export default function EventsSection({ live, go }: { live: LiveState; go: (s: S
                         <Images className="h-4 w-4" /> Fotos
                       </button>
                     )}
-                    <button className="btn-ghost" onClick={() => setForm({ id: ev.id, name: ev.name, description: ev.description, scheduledStart: toLocalInput(ev.scheduledStart), scheduledEnd: toLocalInput(ev.scheduledEnd), startNow: false })} title="Editar">
+                    <button className="btn-ghost" onClick={() => setForm({ id: ev.id, name: ev.name, nameFont: ev.nameFont || DEFAULT_EVENT_FONT, description: ev.description, scheduledStart: toLocalInput(ev.scheduledStart), scheduledEnd: toLocalInput(ev.scheduledEnd), startNow: false })} title="Editar">
                       <Pencil className="h-4 w-4" />
                     </button>
                     {inProgress && (
@@ -271,6 +274,27 @@ export default function EventsSection({ live, go }: { live: LiveState; go: (s: S
             <div>
               <label className="label">Nome do evento *</label>
               <input className="input" autoFocus maxLength={100} required placeholder="Ex.: Festa de final de ano" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div>
+              <label className="label">Fonte do nome do evento</label>
+              <div className="grid max-h-64 grid-cols-2 gap-2 overflow-y-auto rounded-xl border border-slate-200 p-2">
+                {EVENT_FONTS.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setForm({ ...form, nameFont: f.id })}
+                    aria-pressed={form.nameFont === f.id}
+                    className={`rounded-xl border px-3 py-2 text-left transition ${form.nameFont === f.id ? 'border-violet-500 bg-violet-50 ring-2 ring-violet-200' : 'border-slate-200 bg-white hover:bg-slate-50'}`}
+                  >
+                    <span className="block truncate text-2xl leading-tight text-slate-900" style={{ fontFamily: f.css }}>
+                      {form.name.trim() || 'Nome do evento'}
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-slate-500">
+                      {f.label} · {f.kind}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <label className="label">Descrição (opcional)</label>
