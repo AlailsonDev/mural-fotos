@@ -116,15 +116,13 @@ function Login({ passwordConfigured, onDone }: { passwordConfigured: boolean; on
 
   return (
     <main style={brandStyle(null)} className="relative grid min-h-dvh place-items-center overflow-hidden bg-[#0b0b12] p-4">
-      <div className="blob -left-20 top-10 h-72 w-72 brand-gradient" />
-      <div className="blob -right-20 bottom-10 h-72 w-72 bg-pink-500" />
-      <form onSubmit={submit} className="relative w-full max-w-sm rounded-3xl bg-white p-8 shadow-2xl animate-pop">
+      <form onSubmit={submit} className="relative w-full max-w-sm rounded-3xl border border-white/10 bg-white/5 p-8 text-white shadow-2xl animate-pop">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-4 grid h-14 w-14 place-items-center rounded-2xl brand-gradient text-white shadow-lg">
+          <div className="mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-white/10 text-white ring-1 ring-white/15 shadow-lg">
             <Lock className="h-7 w-7" />
           </div>
-          <h1 className="text-xl font-bold text-slate-900">Painel administrativo</h1>
-          <p className="mt-1 text-sm text-slate-500">Mural de Fotos</p>
+          <h1 className="text-xl font-bold text-white">Painel administrativo</h1>
+          <p className="mt-1 text-sm text-white/50">Mural de Fotos</p>
         </div>
         {!passwordConfigured ? (
           <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">
@@ -134,7 +132,7 @@ function Login({ passwordConfigured, onDone }: { passwordConfigured: boolean; on
           </div>
         ) : (
           <>
-            <label className="label" htmlFor="pw">
+            <label className="mb-1.5 block text-sm font-medium text-white/70" htmlFor="pw">
               Senha
             </label>
             <div className="relative">
@@ -143,16 +141,16 @@ function Login({ passwordConfigured, onDone }: { passwordConfigured: boolean; on
                 type={show ? 'text' : 'password'}
                 autoFocus
                 autoComplete="current-password"
-                className="input pr-10"
+                className="w-full rounded-xl border border-white/15 bg-black/40 px-3.5 py-2.5 pr-10 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-white/40 focus:ring-4 focus:ring-white/10"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              <button type="button" onClick={() => setShow((s) => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-700" aria-label="Mostrar senha">
+              <button type="button" onClick={() => setShow((s) => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-white/40 hover:text-white" aria-label="Mostrar senha">
                 {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            {error && <p className="mt-3 text-sm text-rose-600">{error}</p>}
-            <button className="btn-primary mt-5 w-full py-3" disabled={busy || !password}>
+            {error && <p className="mt-3 text-sm text-rose-300">{error}</p>}
+            <button className="btn mt-5 w-full bg-white py-3 text-slate-900 hover:bg-white/90" disabled={busy || !password}>
               {busy ? <Spinner className="h-4 w-4" /> : null} Entrar
             </button>
           </>
