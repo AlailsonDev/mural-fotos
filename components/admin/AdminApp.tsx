@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { api, setCsrfToken, ApiError, brandStyle } from '@/lib/client/api';
 import type { EventRecord, EventStats, PlaybackSnapshot } from '@/lib/shared/types';
-import { ADMIN_THEMES, applyTheme, getTheme, loadThemeId, saveThemeId } from '@/lib/client/themes';
+import { ADMIN_THEMES, applyTheme, getTheme, hasStoredTheme, loadThemeId, saveThemeId } from '@/lib/client/themes';
 import { ConfirmProvider, ToastProvider, Spinner, Modal } from './ui';
 import Dashboard from './sections/Dashboard';
 import EventsSection from './sections/Events';
@@ -170,14 +170,19 @@ function AdminShell({ onLogout }: { onLogout: () => void }) {
 
   useEffect(() => applyTheme(getTheme(themeId)), [themeId]);
 
-  // O tema salvo no servidor vale para todos os aparelhos (e para a página de envio).
+  // O tema fica no servidor para valer em todos os aparelhos e na página de envio.
+  // Se já há uma escolha neste navegador (inclusive de antes desta função), ela é enviada ao servidor;
+  // senão, adota-se o tema do servidor.
   useEffect(() => {
+    const local = hasStoredTheme() ? loadThemeId() : null;
     api<{ settings: { branding: { theme?: string } } }>('/api/admin/settings')
       .then((r) => {
-        const id = r.settings.branding.theme;
-        if (id && getTheme(id).id === id) {
-          setThemeId(id);
-          saveThemeId(id);
+        const server = r.settings.branding.theme;
+        if (local) {
+          if (server !== local) api('/api/admin/settings', { method: 'PATCH', json: { branding: { theme: local } } }).catch(() => undefined);
+        } else if (server && getTheme(server).id === server) {
+          setThemeId(server);
+          saveThemeId(server);
         }
       })
       .catch(() => undefined);

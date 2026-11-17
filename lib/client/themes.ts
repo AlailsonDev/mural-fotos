@@ -15,6 +15,15 @@ export function loadThemeId(): string {
   }
 }
 
+/** O administrador já escolheu um tema neste navegador? */
+export function hasStoredTheme(): boolean {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
 export function saveThemeId(id: string) {
   try {
     window.localStorage.setItem(STORAGE_KEY, id);
