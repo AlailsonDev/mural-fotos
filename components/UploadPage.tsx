@@ -43,6 +43,7 @@ export default function UploadPage() {
   const [result, setResult] = useState<{ accepted: number; rejected: { name: string; reason?: string }[] } | null>(null);
   const [connected, setConnected] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const socketRef = useRef<Socket | null>(null);
 
   const loadStatus = useCallback(async () => {
@@ -94,6 +95,7 @@ export default function UploadPage() {
     }
     setFiles((prev) => [...prev, ...added]);
     if (inputRef.current) inputRef.current.value = '';
+    if (cameraRef.current) cameraRef.current.value = '';
   };
 
   const remove = (id: string) => {
@@ -238,21 +240,43 @@ export default function UploadPage() {
               className="hidden"
               onChange={(e) => onPick(e.target.files)}
             />
+            {/* capture: abre a câmera do aparelho para tirar a foto na hora */}
+            <input
+              ref={cameraRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => onPick(e.target.files)}
+            />
 
             {files.length === 0 ? (
-              <button
-                onClick={() => inputRef.current?.click()}
-                disabled={phase === 'uploading'}
-                className="group flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-white/20 bg-white/5 px-6 py-12 transition hover:border-white/40 hover:bg-white/10 active:scale-[0.99]"
-              >
-                <span className="grid h-16 w-16 place-items-center rounded-full brand-gradient shadow-lg shadow-black/30 transition group-hover:scale-105">
-                  <ImagePlus className="h-8 w-8" />
-                </span>
-                <span className="text-lg font-semibold">Selecionar fotos</span>
-                <span className="text-sm text-white/55">
-                  Até {maxFiles} fotos · JPG, PNG ou WebP · máx. {maxMB} MB
-                </span>
-              </button>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => cameraRef.current?.click()}
+                  disabled={phase === 'uploading'}
+                  className="group flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-white/20 bg-white/5 px-6 py-9 transition hover:border-white/40 hover:bg-white/10 active:scale-[0.99]"
+                >
+                  <span className="grid h-16 w-16 place-items-center rounded-full brand-gradient shadow-lg shadow-black/30 transition group-hover:scale-105">
+                    <Camera className="h-8 w-8" />
+                  </span>
+                  <span className="text-lg font-semibold">Tirar uma foto</span>
+                  <span className="text-sm text-white/55">Abre a câmera do seu celular</span>
+                </button>
+                <button
+                  onClick={() => inputRef.current?.click()}
+                  disabled={phase === 'uploading'}
+                  className="group flex flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-white/20 bg-white/5 px-6 py-7 transition hover:border-white/40 hover:bg-white/10 active:scale-[0.99]"
+                >
+                  <span className="grid h-12 w-12 place-items-center rounded-full bg-white/10 transition group-hover:scale-105">
+                    <ImagePlus className="h-6 w-6" />
+                  </span>
+                  <span className="text-base font-semibold">Escolher da galeria</span>
+                  <span className="text-sm text-white/55">
+                    Até {maxFiles} fotos · JPG, PNG ou WebP · máx. {maxMB} MB
+                  </span>
+                </button>
+              </div>
             ) : (
               <div>
                 <div className="mb-3 flex items-center justify-between text-sm">
@@ -260,9 +284,14 @@ export default function UploadPage() {
                     {files.length} de {maxFiles} {maxFiles === 1 ? 'foto' : 'fotos'} selecionada{files.length === 1 ? '' : 's'}
                   </span>
                   {files.length < maxFiles && phase !== 'uploading' && (
-                    <button onClick={() => inputRef.current?.click()} className="font-semibold text-white underline-offset-4 hover:underline">
-                      + Adicionar
-                    </button>
+                    <span className="flex items-center gap-4">
+                      <button onClick={() => cameraRef.current?.click()} className="inline-flex items-center gap-1 font-semibold text-white underline-offset-4 hover:underline">
+                        <Camera className="h-4 w-4" /> Tirar foto
+                      </button>
+                      <button onClick={() => inputRef.current?.click()} className="font-semibold text-white underline-offset-4 hover:underline">
+                        + Galeria
+                      </button>
+                    </span>
                   )}
                 </div>
                 <div className="flex flex-col gap-3">
